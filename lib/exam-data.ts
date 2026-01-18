@@ -2,7 +2,7 @@ export const examData = {
   pythonTopGrade: {
     name: "Python Programming – Top Grade Exam (Ultra Hard)",
     description: "14 سؤال - 10 أسئلة محسوبة من الدرجات، 4 أسئلة نظرية بدون درجات",
-    time: "120 دقيقة",
+    time: "30 دقيقة",
     marks: 16,
     questions: [
       // Section A: MCQ (Q1-Q5) - 10 Marks (2 each)
@@ -130,7 +130,7 @@ export const examData = {
   }, pythonAdvanced: {
     name: "Python Programming – Advanced Level",
     description: "19 سؤال - 15 أسئلة محسوبة من الدرجات، 4 أسئلة نظرية بدون درجات",
-    time: "120 دقيقة",
+    time: "30 دقيقة",
     marks: 20,
     questions: [
       // Section A: MCQ (Q1-Q10) - 30 Marks
@@ -303,7 +303,7 @@ export const examData = {
   }, final: {
     name: "Final Exam",
     description: "25 سؤال - MCQ + Fill in the Blank + Theory",
-    time: "120 دقيقة",
+    time: "30 دقيقة",
     marks: 50,
     questions: [
       // Section A: MCQ (Q1-Q15)
@@ -533,7 +533,7 @@ export const examData = {
   }, mcq: {
     name: "MCQ Practice",
     description: "40 سؤال - أسئلة اختيار من متعدد",
-    time: "60 دقيقة",
+    time: "30 دقيقة",
     marks: 40,
     questions: [
       {
