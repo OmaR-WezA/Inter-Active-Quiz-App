@@ -1,7 +1,6 @@
 'use client'
 
 import React from "react"
-
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Upload, Download, Trash2, Lock, LogOut } from 'lucide-react'
@@ -130,7 +129,7 @@ export default function AdminPage() {
     console.log('  Deleting file:', fileId)
 
     try {
-      const response = await fetch(`/api/pdf-delete?fileId=${fileId}`, {
+      const response = await fetch(`/api/pdf-delete?fileId=${encodeURIComponent(fileId)}`, {
         method: 'POST',
       })
 
@@ -254,8 +253,8 @@ export default function AdminPage() {
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
                 className={`relative border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${dragActive
-                    ? 'border-blue-500 bg-blue-500/10'
-                    : 'border-slate-600 hover:border-slate-500'
+                  ? 'border-blue-500 bg-blue-500/10'
+                  : 'border-slate-600 hover:border-slate-500'
                   }`}
               >
                 <input
