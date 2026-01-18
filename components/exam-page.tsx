@@ -9,7 +9,7 @@ import { storage, type ExamResult } from "@/lib/storage"
 interface ExamPageProps {
   session: {
     username: string
-    examType: "final" | "mcq"
+    examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade"
     correctionMode: "immediate" | "final"
     resumeData?: {
       currentQuestion: number
@@ -27,6 +27,9 @@ export default function ExamPage({ session, onComplete, onExit }: ExamPageProps)
   const [showFeedback, setShowFeedback] = useState(false)
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set())
   const [showExitDialog, setShowExitDialog] = useState(false)
+  const [showTheoryAnswer, setShowTheoryAnswer] = useState(false)
+  const [mcqCorrectCount, setMcqCorrectCount] = useState(0)
+  const [mcqCount, setMcqCount] = useState(0)
 
   const question = exam.questions[currentQuestion]
   const isLastQuestion = currentQuestion === exam.questions.length - 1
@@ -48,6 +51,11 @@ export default function ExamPage({ session, onComplete, onExit }: ExamPageProps)
   }
 
   const handleNext = () => {
+    // For theory questions, require showing the answer first
+    if (question.type === "theory" && !showTheoryAnswer) {
+      return
+    }
+
     if (!hasAnsweredCurrentQuestion) {
       return
     }
@@ -60,15 +68,20 @@ export default function ExamPage({ session, onComplete, onExit }: ExamPageProps)
       setShowFeedback(true)
     }
 
+    // Theory questions don't require delay
+    const isTheoryQuestion = question.type === "theory"
+    const delay = isTheoryQuestion ? 0 : 2000
+
     if (isLastQuestion) {
       setTimeout(() => {
         completeExam()
-      }, 2000)
+      }, delay)
     } else {
       setTimeout(() => {
         setCurrentQuestion(currentQuestion + 1)
         setShowFeedback(false)
-      }, 2000)
+        setShowTheoryAnswer(false)
+      }, delay)
     }
   }
 
@@ -80,21 +93,36 @@ export default function ExamPage({ session, onComplete, onExit }: ExamPageProps)
   }
 
   const completeExam = () => {
-    let mcqScore = 0
-    let essayCount = 0
-    let mcqCount = 0
+    let scoredScore = 0
+    let totalScoredMarks = 0
+    let scorableCount = 0
+    let correctCount = 0
 
     exam.questions.forEach((q) => {
       const userAnswer = answers[q.id]
-      const correct = q.correct.toUpperCase()
+      const correct = q.correct
+
+      // Skip theory questions from scoring
+      if (q.type === "theory") {
+        return
+      }
+
+      totalScoredMarks += q.marks
+      scorableCount++
 
       if (q.type === "mcq") {
-        mcqCount++
         const answerIndex = userAnswer?.charCodeAt(0) - 65
-        const correctIndex = correct.charCodeAt(0) - 65
-        if (answerIndex === correctIndex) mcqScore += q.marks
-      } else {
-        essayCount++
+        const correctIndex = correct.toUpperCase().charCodeAt(0) - 65
+        if (answerIndex === correctIndex) {
+          scoredScore += q.marks
+          correctCount++
+        }
+      } else if (q.type === "fillblank" || q.type === "codeoutput") {
+        // Exact match for fill blank and code output
+        if (userAnswer?.toLowerCase().trim() === (correct as string).toLowerCase().trim()) {
+          scoredScore += q.marks
+          correctCount++
+        }
       }
     })
 
@@ -102,22 +130,15 @@ export default function ExamPage({ session, onComplete, onExit }: ExamPageProps)
       id: Date.now().toString(),
       examType: session.examType,
       correctionMode: session.correctionMode,
-      score: mcqScore,
-      totalMarks: exam.marks,
-      percentage: (mcqScore / exam.marks) * 100,
+      score: scoredScore,
+      totalMarks: totalScoredMarks,
+      percentage: totalScoredMarks > 0 ? (scoredScore / totalScoredMarks) * 100 : 0,
       completedAt: new Date().toISOString(),
       startedAt: new Date().toISOString(),
       status: "completed",
       answers,
-      mcqCorrect: exam.questions.filter((q, idx) => {
-        if (q.type !== "mcq") return false
-        const userAnswer = answers[q.id]
-        if (!userAnswer) return false
-        const answerIndex = userAnswer.charCodeAt(0) - 65
-        const correctIndex = q.correct.charCodeAt(0) - 65
-        return answerIndex === correctIndex
-      }).length,
-      mcqTotal: mcqCount,
+      mcqCorrect: correctCount,
+      mcqTotal: scorableCount,
     }
 
     storage.saveExamResult(session.username, result)
@@ -137,6 +158,23 @@ export default function ExamPage({ session, onComplete, onExit }: ExamPageProps)
       return userAnswer.toLowerCase().trim() === (question.correct as string).toLowerCase().trim()
     }
   }
+
+  useEffect(() => {
+    let correctCount = 0
+    let totalCount = 0
+
+    exam.questions.forEach((q) => {
+      if (q.type === "mcq") {
+        totalCount++
+        if (isAnswerCorrect()) {
+          correctCount++
+        }
+      }
+    })
+
+    setMcqCorrectCount(correctCount)
+    setMcqCount(totalCount)
+  }, [exam.questions, answers])
 
   return (
     <>
@@ -191,7 +229,13 @@ export default function ExamPage({ session, onComplete, onExit }: ExamPageProps)
               <div className="inline-block bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full text-sm font-medium mb-4">
                 {question.section ? `Section ${question.section}` : question.type.toUpperCase()}
               </div>
-              <h2 className="text-2xl font-bold text-white">{question.question}</h2>
+              {question.type === "codeoutput" || question.type === "mcq" && (question as any).question.includes("```") ? (
+                <div className="bg-slate-900/50 border-2 border-slate-700 rounded-xl p-4 overflow-x-auto">
+                  <pre className="text-green-400 font-mono text-sm whitespace-pre-wrap break-words">{question.question}</pre>
+                </div>
+              ) : (
+                <h2 className="text-2xl font-bold text-white">{question.question}</h2>
+              )}
             </div>
 
             {/* Answer Options */}
@@ -213,8 +257,7 @@ export default function ExamPage({ session, onComplete, onExit }: ExamPageProps)
                       whileHover={canChangeAnswer ? { x: 4 } : {}}
                       whileTap={canChangeAnswer ? { scale: 0.98 } : {}}
                       disabled={!canChangeAnswer}
-                      className={`w-full p-4 rounded-xl border-2 transition-all text-left font-medium ${
-                        shouldShowFeedback
+                      className={`w-full p-4 rounded-xl border-2 transition-all text-left font-medium ${shouldShowFeedback
                           ? isCorrect
                             ? "border-green-500 bg-green-500/10 text-green-300"
                             : isSelected
@@ -223,12 +266,61 @@ export default function ExamPage({ session, onComplete, onExit }: ExamPageProps)
                           : isSelected
                             ? "border-cyan-500 bg-cyan-500/10 text-cyan-300"
                             : "border-slate-600 bg-slate-700/30 text-slate-200 hover:border-cyan-400"
-                      } ${!canChangeAnswer && isSelected ? "cursor-not-allowed" : ""}`}
+                        } ${!canChangeAnswer && isSelected ? "cursor-not-allowed" : ""}`}
                     >
                       <span className="font-bold">{optionLetter}.</span> {option}
                     </motion.button>
                   )
                 })}
+              </div>
+            ) : question.type === "theory" ? (
+              <div className="mb-8 space-y-4">
+                <div className="bg-amber-500/10 border-2 border-amber-500/30 rounded-xl p-4">
+                  <p className="text-amber-200 text-sm flex items-center gap-2">
+                    <span className="text-lg">ℹ️</span>
+                    هذا سؤال نظري - اكتب إجابتك ثم اعرض الإجابة الصحيحة للمقارنة
+                  </p>
+                </div>
+                <textarea
+                  value={answers[question.id] || ""}
+                  onChange={(e) => {
+                    const canEdit = !(session.correctionMode === "immediate" && isCurrentQuestionAnswered)
+                    if (canEdit) {
+                      handleAnswer(e.target.value)
+                    }
+                  }}
+                  disabled={session.correctionMode === "immediate" && isCurrentQuestionAnswered}
+                  placeholder="أدخل إجابتك النظرية هنا..."
+                  className="w-full px-4 py-3 bg-slate-700/30 border-2 border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[120px] resize-none font-mono text-sm"
+                />
+                {!showTheoryAnswer && (
+                  <motion.button
+                    onClick={() => setShowTheoryAnswer(true)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full py-3 bg-amber-500/20 border-2 border-amber-500/50 text-amber-300 font-semibold rounded-xl hover:bg-amber-500/30 transition-all"
+                  >
+                    عرض الإجابة الصحيحة
+                  </motion.button>
+                )}
+              </div>
+            ) : question.type === "codeoutput" ? (
+              <div className="mb-8 space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-300 mb-3">المخرجات المتوقعة:</label>
+                  <textarea
+                    value={answers[question.id] || ""}
+                    onChange={(e) => {
+                      const canEdit = !(session.correctionMode === "immediate" && isCurrentQuestionAnswered)
+                      if (canEdit) {
+                        handleAnswer(e.target.value)
+                      }
+                    }}
+                    disabled={session.correctionMode === "immediate" && isCurrentQuestionAnswered}
+                    placeholder="اكتب مخرجات البرنامج..."
+                    className="w-full px-4 py-3 bg-slate-700/30 border-2 border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[100px] resize-none font-mono text-sm"
+                  />
+                </div>
               </div>
             ) : (
               <div className="mb-8">
@@ -248,24 +340,54 @@ export default function ExamPage({ session, onComplete, onExit }: ExamPageProps)
               </div>
             )}
 
-            {/* Feedback - shown after moving to next */}
+            {/* Feedback - shown after showing answer for theory or immediate feedback for others */}
             <AnimatePresence>
-              {showFeedback && isCurrentQuestionAnswered && (
+              {((question.type === "theory" && showTheoryAnswer) || (showFeedback && isCurrentQuestionAnswered && question.type !== "theory")) && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className={`p-4 rounded-xl mb-8 border-2 ${
-                    isAnswerCorrect()
-                      ? "bg-green-500/10 border-green-500 text-green-300"
-                      : "bg-red-500/10 border-red-500 text-red-300"
-                  }`}
+                  className={`p-4 rounded-xl mb-8 border-2 ${question.type === "theory"
+                      ? "bg-blue-500/10 border-blue-500 text-blue-300"
+                      : isAnswerCorrect()
+                        ? "bg-green-500/10 border-green-500 text-green-300"
+                        : "bg-red-500/10 border-red-500 text-red-300"
+                    }`}
                 >
-                  <p className="font-semibold mb-2">{isAnswerCorrect() ? "✓ إجابة صحيحة!" : "✗ إجابة خاطئة"}</p>
-                  {!isAnswerCorrect() && (
-                    <p className="text-sm">
-                      الإجابة الصحيحة: <span className="font-semibold">{question.correct}</span>
-                    </p>
+                  {question.type === "theory" ? (
+                    <div>
+                      <p className="font-semibold mb-3 flex items-center gap-2">
+                        <span className="text-lg">📝</span>
+                        الإجابة الصحيحة (للمقارنة فقط):
+                      </p>
+                      <div className="bg-slate-900/30 rounded-lg p-3 border border-blue-400/30 text-sm text-blue-100 font-mono whitespace-pre-wrap break-words">
+                        {question.correct}
+                      </div>
+                      <p className="text-xs mt-3 text-blue-200">
+                        قارن إجابتك مع الإجابة الصحيحة. لا تؤثر الأسئلة النظرية على الدرجة.
+                      </p>
+                    </div>
+                  ) : question.type === "codeoutput" ? (
+                    <div>
+                      <p className="font-semibold mb-2">{isAnswerCorrect() ? "✓ مخرجات صحيحة!" : "✗ مخرجات خاطئة"}</p>
+                      {!isAnswerCorrect() && (
+                        <div>
+                          <p className="text-sm mb-2">المخرجات الصحيحة:</p>
+                          <div className="bg-slate-900/30 rounded-lg p-2 border border-green-400/30 text-sm text-green-100 font-mono whitespace-pre-wrap break-words">
+                            {question.correct}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="font-semibold mb-2">{isAnswerCorrect() ? "✓ إجابة صحيحة!" : "✗ إجابة خاطئة"}</p>
+                      {!isAnswerCorrect() && (
+                        <p className="text-sm">
+                          الإجابة الصحيحة: <span className="font-semibold text-base">{question.correct}</span>
+                        </p>
+                      )}
+                    </div>
                   )}
                 </motion.div>
               )}

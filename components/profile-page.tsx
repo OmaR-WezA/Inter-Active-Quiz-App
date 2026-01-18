@@ -49,8 +49,17 @@ export default function ProfilePage({ username, onBackHome }: Props) {
         transition={{ duration: 0.5 }}
         className="w-full max-w-4xl mx-auto"
       >
-        {/* Header with Logout */}
+        {/* Header with Navigation Buttons */}
         <motion.div className="flex items-center justify-between mb-8">
+          <motion.button
+            onClick={onBackHome}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 text-slate-300 hover:text-cyan-400 transition-colors"
+          >
+            <span>←</span>
+            <span>العودة للرئيسية</span>
+          </motion.button>
           <motion.button
             onClick={() => setLogoutConfirm(true)}
             whileHover={{ scale: 1.05 }}
@@ -135,9 +144,8 @@ export default function ProfilePage({ username, onBackHome }: Props) {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.6 + idx * 0.05 }}
-                  className={`rounded-lg p-4 flex items-center justify-between hover:bg-slate-700/50 transition-all ${
-                    exam.status === "incomplete" ? "bg-yellow-500/10 border border-yellow-500/50" : "bg-slate-700/30"
-                  }`}
+                  className={`rounded-lg p-4 flex items-center justify-between hover:bg-slate-700/50 transition-all ${exam.status === "incomplete" ? "bg-yellow-500/10 border border-yellow-500/50" : "bg-slate-700/30"
+                    }`}
                 >
                   <div>
                     <p className="font-semibold text-white">{exam.examType === "final" ? "امتحان نهائي" : "MCQ"}</p>

@@ -6,7 +6,7 @@ import { storage } from "@/lib/storage"
 interface Props {
   session: {
     username: string
-    examType: "final" | "mcq"
+    examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade"
   }
   onViewProfile: () => void
   onBackHome: () => void
@@ -81,19 +81,62 @@ export default function ResultsPage({ session, onViewProfile, onBackHome }: Prop
               transition={{ delay: 0.3 }}
               className="bg-slate-700/30 border border-slate-600 rounded-xl p-6 mb-8"
             >
-              <h3 className="text-lg font-semibold text-white mb-4">تفصيل النتائج</h3>
+              <h3 className="text-lg font-semibold text-white mb-6">تفصيل النتائج</h3>
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-300">أسئلة الاختيار من متعدد (MCQ)</span>
-                  <span className="text-cyan-400 font-semibold">
-                    {lastExam.mcqCorrect}/{lastExam.mcqTotal} صحيحة
-                  </span>
-                </div>
-                {session.examType === "final" && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-300">أسئلة مقالية (لم تحتسب)</span>
-                    <span className="text-slate-400 text-sm">غير محسوبة في الدرجة</span>
-                  </div>
+                {lastExam.mcqTotal !== undefined && (
+                  <>
+                    {/* MCQ Score */}
+                    <div className="bg-slate-700/20 border border-slate-600/50 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-slate-300 font-medium">أسئلة الاختيار من متعدد (MCQ)</span>
+                        <span className="text-cyan-400 font-bold text-base">
+                          {lastExam.mcqCorrect}/{lastExam.mcqTotal}
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-700 rounded-full h-2 mb-2">
+                        <div
+                          className="bg-cyan-500 h-2 rounded-full transition-all"
+                          style={{ width: `${(lastExam.mcqCorrect! / lastExam.mcqTotal!) * 100}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        {Math.round((lastExam.mcqCorrect! / lastExam.mcqTotal!) * 100)}% - محسوبة من الدرجة النهائية
+                      </p>
+                    </div>
+
+                    {/* Fill Blank Questions */}
+                    <div className="bg-slate-700/20 border border-slate-600/50 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-slate-300 font-medium">أسئلة ملء الفراغات</span>
+                        <span className="text-green-400 font-bold text-sm">محسوبة</span>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        الإجابات الصحيحة محسوبة من الدرجة النهائية
+                      </p>
+                    </div>
+
+                    {/* Code Output Questions */}
+                    <div className="bg-slate-700/20 border border-slate-600/50 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-slate-300 font-medium">أسئلة مخرجات الأكواد</span>
+                        <span className="text-green-400 font-bold text-sm">محسوبة</span>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        الإجابات الصحيحة محسوبة من الدرجة النهائية
+                      </p>
+                    </div>
+
+                    {/* Theory Questions */}
+                    <div className="bg-slate-700/20 border border-slate-600/50 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-slate-300 font-medium">أسئلة نظرية</span>
+                        <span className="text-amber-500 font-bold text-sm">بدون درجات</span>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        للتقييم الذاتي والفهم العميق
+                      </p>
+                    </div>
+                  </>
                 )}
               </div>
             </motion.div>
@@ -102,7 +145,13 @@ export default function ResultsPage({ session, onViewProfile, onBackHome }: Prop
           {/* Details */}
           <div className="grid grid-cols-2 gap-4 mb-8">
             {[
-              { label: "نوع الامتحان", value: session.examType === "final" ? "امتحان نهائي" : "MCQ" },
+              {
+                label: "نوع الامتحان",
+                value: session.examType === "final" ? "امتحان نهائي"
+                  : session.examType === "mcq" ? "MCQ"
+                    : session.examType === "pythonAdvanced" ? "Python Advanced"
+                      : "Python Top Grade"
+              },
               { label: "الوقت", value: new Date(lastExam.completedAt || "").toLocaleDateString("ar-EG") },
             ].map((item, idx) => (
               <motion.div

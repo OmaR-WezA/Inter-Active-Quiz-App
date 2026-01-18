@@ -15,7 +15,7 @@ type PageType = "welcome" | "selection" | "exam" | "results" | "profile" | "resu
 
 interface ExamSession {
   username: string
-  examType: "final" | "mcq"
+  examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade"
   correctionMode: "immediate" | "final"
   resumeData?: {
     currentQuestion: number
@@ -52,7 +52,7 @@ export default function Home() {
     setCurrentPage("selection")
   }
 
-  const handleSelectExam = (examType: "final" | "mcq", correctionMode: "immediate" | "final") => {
+  const handleSelectExam = (examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade", correctionMode: "immediate" | "final") => {
     if (examSession) {
       setExamSession({ ...examSession, examType, correctionMode })
       setCurrentPage("exam")

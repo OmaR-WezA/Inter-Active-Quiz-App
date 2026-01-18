@@ -7,9 +7,9 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'interactive-quiz-app',
-  description: 'Weza Production',
-  generator: 'Omar Fahem',
+  title: 'v0 App',
+  description: 'Created with v0',
+  generator: 'v0.app',
   icons: {
     icon: [
       {

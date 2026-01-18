@@ -5,12 +5,12 @@ import { ArrowRight, Clock, BookMarked } from "lucide-react"
 import { examData } from "@/lib/exam-data"
 
 interface Props {
-  onSelect: (examType: "final" | "mcq", correctionMode: "immediate" | "final") => void
+  onSelect: (examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade", correctionMode: "immediate" | "final") => void
   onBack: () => void
 }
 
 export default function ExamSelectionPage({ onSelect, onBack }: Props) {
-  const [selectedExam, setSelectedExam] = React.useState<"final" | "mcq" | null>(null)
+  const [selectedExam, setSelectedExam] = React.useState<"final" | "mcq" | "pythonAdvanced" | "pythonTopGrade" | null>(null)
   const [correctionMode, setCorrectionMode] = React.useState<"immediate" | "final" | null>(null)
 
   React.useEffect(() => {
@@ -52,7 +52,7 @@ export default function ExamSelectionPage({ onSelect, onBack }: Props) {
             {Object.entries(examData).map(([key, exam]) => (
               <motion.button
                 key={key}
-                onClick={() => setSelectedExam(key as "final" | "mcq")}
+                onClick={() => setSelectedExam(key as "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade")}
                 whileHover={{ y: -8 }}
                 whileTap={{ scale: 0.98 }}
                 className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 hover:border-cyan-400 rounded-2xl p-8 text-left transition-all group overflow-hidden"

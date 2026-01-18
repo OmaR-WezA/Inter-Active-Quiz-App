@@ -215,7 +215,7 @@ export default function WelcomePage({ onStart }: Props) {
         )}
 
         {/* Footer */}
-        <p className="text-center text-slate-400 mt-8 text-sm">الإصدار 2.0 - جميع الحقوق محفوظة</p>
+        <p className="text-center text-slate-400 mt-8 text-sm">Weza Production</p>
       </motion.div>
     </div>
   )

@@ -3,7 +3,7 @@ export interface UserProfile {
   joinDate: string
   exams: ExamResult[]
   currentSession?: {
-    examType: "final" | "mcq"
+    examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade"
     correctionMode: "immediate" | "final"
     currentQuestion: number
     answers: Record<number, string>
@@ -13,7 +13,7 @@ export interface UserProfile {
 
 export interface ExamResult {
   id: string
-  examType: "final" | "mcq"
+  examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade"
   correctionMode: "immediate" | "final"
   score?: number
   totalMarks: number
