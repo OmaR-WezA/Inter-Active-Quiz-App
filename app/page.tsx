@@ -8,10 +8,12 @@ import ExamPage from "@/components/exam-page"
 import ResultsPage from "@/components/results-page"
 import ProfilePage from "@/components/profile-page"
 import ResumeDialog from "@/components/resume-dialog"
+import StudentPDFLibrary from "@/components/student-pdf-library"
 import { storage } from "@/lib/storage"
 import { examData } from "@/lib/exam-data"
+import PDFLibraryPage from "@/components/pdf-library-page"
 
-type PageType = "welcome" | "selection" | "exam" | "results" | "profile" | "resume-dialog"
+type PageType = "welcome" | "selection" | "exam" | "results" | "profile" | "resume-dialog" | "pdf-library"
 
 interface ExamSession {
   username: string
@@ -86,10 +88,14 @@ export default function Home() {
     localStorage.removeItem("last_username")
   }
 
+  const handleOpenPDFLibrary = () => {
+    setCurrentPage("pdf-library")
+  } // Added function declaration for handleOpenPDFLibrary
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-        {currentPage === "welcome" && <WelcomePage onStart={handleStartExam} />}
+        {currentPage === "welcome" && <WelcomePage onStart={handleStartExam} onOpenPDFLibrary={handleOpenPDFLibrary} />}
         {currentPage === "selection" && examSession && (
           <ExamSelectionPage onSelect={handleSelectExam} onBack={handleBackHome} />
         )}
@@ -129,6 +135,12 @@ export default function Home() {
         {currentPage === "profile" && examSession && (
           <ProfilePage username={examSession.username} onBackHome={handleBackHome} />
         )}
+        {currentPage === "pdf-library" && (
+          <StudentPDFLibrary onBack={handleBackHome} />
+        )}
+        {/* {currentPage === "pdf-library" && (
+          <PDFLibraryPage onBack={handleBackHome} />
+        )} */}
       </motion.div>
     </main>
   )
