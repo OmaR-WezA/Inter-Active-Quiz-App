@@ -1,4 +1,4 @@
-import { unlinkSync, readFileSync, writeFileSync, existsSync } from 'fs'
+import { unlinkSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 
 export async function POST(request: Request) {
@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const { searchParams } = new URL(request.url)
     const fileId = searchParams.get('fileId')
 
-    console.log('[DELETE] fileId:', fileId)
+    console.log(' Delete request for fileId:', fileId)
 
     if (!fileId) {
       return Response.json(
@@ -15,59 +15,61 @@ export async function POST(request: Request) {
       )
     }
 
+    // Get file from list
     const filesListPath = join(process.cwd(), 'public', 'pdfs-list.json')
-
-    // Read list
     let filesList = []
+
     try {
       const data = readFileSync(filesListPath, 'utf-8')
       filesList = JSON.parse(data)
     } catch (err) {
-      console.error('[DELETE] Error reading list:', err)
+      console.error('ابلععع Error reading files list:', err)
       return Response.json(
         { error: 'Files list not found' },
         { status: 404 }
       )
     }
 
-    const fileEntry = filesList.find((f: any) => f.id === fileId)
+    const fileEntry = filesList.find(
+      (f: any) => f.id === fileId
+    )
 
     if (!fileEntry) {
-      console.error('[DELETE] File entry not found:', fileId)
+      console.error('ابلععع File entry not found for id:', fileId)
       return Response.json(
-        { error: 'File not found in list' },
+        { error: 'File not found' },
         { status: 404 }
       )
     }
 
-    const filepath = join(process.cwd(), 'public', 'pdfs', fileEntry.savedName)
-    console.log('[DELETE] File path:', filepath)
+    // Delete file from filesystem
+    const filepath = join(
+      process.cwd(),
+      'public',
+      'pdfs',
+      fileEntry.savedName
+    )
 
-    // Delete file if exists
-    if (existsSync(filepath)) {
-      try {
-        unlinkSync(filepath)
-        console.log('[DELETE] Deleted from filesystem:', filepath)
-      } catch (err) {
-        console.error('[DELETE] Error deleting file:', err)
-        return Response.json(
-          { error: 'Failed to delete file from disk', details: String(err) },
-          { status: 500 }
-        )
-      }
-    } else {
-      console.warn('[DELETE] File not found on disk (skip delete):', filepath)
+    try {
+      unlinkSync(filepath)
+      console.log('File deleted from filesystem:', filepath)
+    } catch (err) {
+      console.error('ابلععع deleting file:', err)
     }
 
     // Remove from list
-    const updatedList = filesList.filter((f: any) => f.id !== fileId)
-    writeFileSync(filesListPath, JSON.stringify(updatedList, null, 2))
+    filesList = filesList.filter(
+      (f: any) => f.id !== fileId
+    )
+    writeFileSync(filesListPath, JSON.stringify(filesList, null, 2))
 
-    console.log('[DELETE] File removed from list')
-    return Response.json({ success: true })
+    console.log('File removed from list')
 
+    return Response.json({
+      success: true,
+    })
   } catch (error) {
-    console.error('[DELETE] Error:', error)
+    console.error('ابلععع delete', error)
     return Response.json(
       { error: 'Failed to delete file', details: String(error) },
       { status: 500 }

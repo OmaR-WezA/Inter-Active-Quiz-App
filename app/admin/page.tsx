@@ -1,6 +1,7 @@
 'use client'
 
 import React from "react"
+
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Upload, Download, Trash2, Lock, LogOut } from 'lucide-react'
@@ -129,7 +130,7 @@ export default function AdminPage() {
     console.log('  Deleting file:', fileId)
 
     try {
-      const response = await fetch(`/api/pdf-delete?fileId=${encodeURIComponent(fileId)}`, {
+      const response = await fetch(`/api/pdf-delete?fileId=${fileId}`, {
         method: 'POST',
       })
 
