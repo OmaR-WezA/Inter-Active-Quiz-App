@@ -115,9 +115,7 @@ export default function StudentPDFLibrary({ onBack }: Props) {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-gray-300 space-y-2">
-              <p>✓ جميع الملفات تحتوي على علامة حماية (watermark)</p>
               <p>✓ يمكنك تحميل أي ملف من القائمة أدناه</p>
-              <p>✓ الملفات محمية بحقوق الملكية الفكرية</p>
             </CardContent>
           </Card>
         </motion.div>
