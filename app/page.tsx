@@ -1,39 +1,147 @@
-'use client';
+"use client"
 
-import { LocalStorageManager } from '@/components/LocalStorageManager';
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import WelcomePage from "@/components/welcome-page"
+import ExamSelectionPage from "@/components/exam-selection-page"
+import ExamPage from "@/components/exam-page"
+import ResultsPage from "@/components/results-page"
+import ProfilePage from "@/components/profile-page"
+import ResumeDialog from "@/components/resume-dialog"
+import StudentPDFLibrary from "@/components/student-pdf-library"
+import { storage } from "@/lib/storage"
+import { examData } from "@/lib/exam-data"
+import PDFLibraryPage from "@/components/pdf-library-page"
 
-export default function Page() {
+type PageType = "welcome" | "selection" | "exam" | "results" | "profile" | "resume-dialog" | "pdf-library"
+
+interface ExamSession {
+  username: string
+  examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade"
+  correctionMode: "immediate" | "final"
+  resumeData?: {
+    currentQuestion: number
+    answers: Record<number, string>
+  }
+}
+
+export default function Home() {
+  const [currentPage, setCurrentPage] = useState<PageType>("welcome")
+  const [examSession, setExamSession] = useState<ExamSession | null>(null)
+
+  useEffect(() => {
+    const lastUsername = localStorage.getItem("last_username")
+    if (lastUsername) {
+      const savedSession = storage.getCurrentSession(lastUsername)
+      if (savedSession) {
+        setExamSession({
+          username: lastUsername,
+          examType: savedSession.examType,
+          correctionMode: savedSession.correctionMode,
+          resumeData: {
+            currentQuestion: savedSession.currentQuestion,
+            answers: savedSession.answers,
+          },
+        })
+        setCurrentPage("resume-dialog")
+      }
+    }
+  }, [])
+
+  const handleStartExam = (username: string) => {
+    localStorage.setItem("last_username", username)
+    setExamSession({ username, examType: "final", correctionMode: "immediate" })
+    setCurrentPage("selection")
+  }
+
+  const handleSelectExam = (examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade", correctionMode: "immediate" | "final") => {
+    if (examSession) {
+      setExamSession({ ...examSession, examType, correctionMode })
+      setCurrentPage("exam")
+    }
+  }
+
+  const handleExamComplete = () => {
+    setCurrentPage("results")
+  }
+
+  const handleResumeExam = () => {
+    setCurrentPage("exam")
+  }
+
+  const handleNewExam = () => {
+    if (examSession) {
+      storage.clearCurrentSession(examSession.username)
+      setExamSession({ ...examSession, resumeData: undefined })
+      setCurrentPage("exam")
+    }
+  }
+
+  const handleViewProfile = (username: string) => {
+    setExamSession({ ...examSession!, username })
+    setCurrentPage("profile")
+  }
+
+  const handleBackHome = () => {
+    setCurrentPage("welcome")
+    setExamSession(null)
+    localStorage.removeItem("last_username")
+  }
+
+  const handleOpenPDFLibrary = () => {
+    setCurrentPage("pdf-library")
+  } // Added function declaration for handleOpenPDFLibrary
+
   return (
-    <main className="min-h-screen bg-background">
-      {/* مكون تنظيف localStorage التلقائي */}
-      <LocalStorageManager />
-
-      {/* محتوى التطبيق الرئيسي */}
-      <div className="container mx-auto py-10">
-        <h1 className="text-4xl font-bold mb-4">تطبيق الامتحانات التفاعلي</h1>
-        <p className="text-lg text-muted-foreground mb-6">
-          ✅ تم تفعيل تنظيف localStorage تلقائياً كل 15 دقيقة
-        </p>
-        <div className="bg-card p-6 rounded-lg border">
-          <h2 className="text-2xl font-semibold mb-4">المميزات:</h2>
-          <ul className="space-y-2 text-foreground">
-            <li>✓ تنظيف تلقائي لبيانات الامتحانات كل 15 دقيقة</li>
-            <li>✓ منع تضارب البيانات عند فتح عدة امتحانات</li>
-            <li>✓ حفظ البيانات المهمة (المظهر والتفضيلات)</li>
-            <li>✓ يعمل بشكل تلقائي بدون تدخل من المستخدم</li>
-          </ul>
-        </div>
-
-        {/* معلومات إضافية */}
-        <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
-          <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-            💡 ملاحظة تقنية:
-          </h3>
-          <p className="text-sm text-blue-800 dark:text-blue-200">
-            إذا أردت رؤية تفاصيل عملية التنظيف، افتح Developer Tools (F12) وانظر لـ Console
-          </p>
-        </div>
-      </div>
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+        {currentPage === "welcome" && <WelcomePage onStart={handleStartExam} onOpenPDFLibrary={handleOpenPDFLibrary} />}
+        {currentPage === "selection" && examSession && (
+          <ExamSelectionPage onSelect={handleSelectExam} onBack={handleBackHome} />
+        )}
+        {currentPage === "resume-dialog" && examSession && (
+          <ResumeDialog
+            username={examSession.username}
+            examType={examSession.examType}
+            onResume={handleResumeExam}
+            onNew={handleNewExam}
+            onCancel={handleBackHome}
+          />
+        )}
+        {currentPage === "exam" && examSession && (
+          <ExamPage
+            session={examSession}
+            onComplete={handleExamComplete}
+            onExit={() => {
+              if (examSession) {
+                storage.saveIncompleteExam(
+                  examSession.username,
+                  examSession.examType,
+                  {},
+                  examData[examSession.examType].marks,
+                )
+              }
+              handleBackHome()
+            }}
+          />
+        )}
+        {currentPage === "results" && examSession && (
+          <ResultsPage
+            session={examSession}
+            onViewProfile={() => handleViewProfile(examSession.username)}
+            onBackHome={handleBackHome}
+          />
+        )}
+        {currentPage === "profile" && examSession && (
+          <ProfilePage username={examSession.username} onBackHome={handleBackHome} />
+        )}
+        {currentPage === "pdf-library" && (
+          <StudentPDFLibrary onBack={handleBackHome} />
+        )}
+        {/* {currentPage === "pdf-library" && (
+          <PDFLibraryPage onBack={handleBackHome} />
+        )} */}
+      </motion.div>
     </main>
-  );
+  )
 }
