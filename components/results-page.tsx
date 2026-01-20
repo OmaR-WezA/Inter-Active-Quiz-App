@@ -6,7 +6,7 @@ import { storage } from "@/lib/storage"
 interface Props {
   session: {
     username: string
-    examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade"
+    examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade" | "ExtraExam"
   }
   onViewProfile: () => void
   onBackHome: () => void

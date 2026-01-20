@@ -3,7 +3,7 @@ export interface UserProfile {
   joinDate: string
   exams: ExamResult[]
   currentSession?: {
-    examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade"
+    examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade" | "ExtraExam"
     correctionMode: "immediate" | "final"
     currentQuestion: number
     answers: Record<number, string>
@@ -13,7 +13,7 @@ export interface UserProfile {
 
 export interface ExamResult {
   id: string
-  examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade"
+  examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade" | "ExtraExam"
   correctionMode: "immediate" | "final"
   score?: number
   totalMarks: number
@@ -58,13 +58,14 @@ export const storage = {
 
   saveExamSession: (
     name: string,
-    examType: "final" | "mcq",
+    examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade" | "ExtraExam",
     correctionMode: "immediate" | "final",
     currentQuestion: number,
     answers: Record<number, string>,
   ): void => {
     if (!name) return
     try {
+      console.log("[v0] saveExamSession - examType:", examType, "currentQuestion:", currentQuestion)
       const user = storage.getUser(name) || storage.createUser(name)
       user.currentSession = {
         examType,
@@ -75,6 +76,7 @@ export const storage = {
       }
       const key = `${STORAGE_KEY}_user_${name}`
       localStorage.setItem(key, JSON.stringify(user))
+      console.log("[v0] Session saved successfully with examType:", examType)
     } catch (error) {
       console.error("[v0] Error saving session:", error)
     }
@@ -84,7 +86,9 @@ export const storage = {
     if (!name) return null
     try {
       const user = storage.getUser(name)
-      return user?.currentSession || null
+      const session = user?.currentSession || null
+      console.log("[v0] getCurrentSession - examType:", session?.examType, "questions stored:", Object.keys(session?.answers || {}).length)
+      return session
     } catch (error) {
       console.error("[v0] Error getting session:", error)
       return null
@@ -93,7 +97,7 @@ export const storage = {
 
   saveIncompleteExam: (
     name: string,
-    examType: "final" | "mcq",
+    examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade" | "ExtraExam",
     answers: Record<number, string>,
     totalMarks: number,
   ): void => {

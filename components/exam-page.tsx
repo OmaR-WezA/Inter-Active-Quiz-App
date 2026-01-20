@@ -9,7 +9,7 @@ import { storage, type ExamResult } from "@/lib/storage"
 interface ExamPageProps {
   session: {
     username: string
-    examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade"
+    examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade" | "ExtraExam"
     correctionMode: "immediate" | "final"
     resumeData?: {
       currentQuestion: number
@@ -21,7 +21,10 @@ interface ExamPageProps {
 }
 
 export default function ExamPage({ session, onComplete, onExit }: ExamPageProps) {
+  console.log("[v0] ExamPage loading with examType:", session.examType)
+  console.log("[v0] examData keys:", Object.keys(examData))
   const exam = examData[session.examType]
+  console.log("[v0] Selected exam:", exam?.name, "Questions count:", exam?.questions.length)
   const [currentQuestion, setCurrentQuestion] = useState(session.resumeData?.currentQuestion || 0)
   const [answers, setAnswers] = useState<Record<number, string>>(session.resumeData?.answers || {})
   const [showFeedback, setShowFeedback] = useState(false)
@@ -258,14 +261,14 @@ export default function ExamPage({ session, onComplete, onExit }: ExamPageProps)
                       whileTap={canChangeAnswer ? { scale: 0.98 } : {}}
                       disabled={!canChangeAnswer}
                       className={`w-full p-4 rounded-xl border-2 transition-all text-left font-medium ${shouldShowFeedback
-                          ? isCorrect
-                            ? "border-green-500 bg-green-500/10 text-green-300"
-                            : isSelected
-                              ? "border-red-500 bg-red-500/10 text-red-300"
-                              : "border-slate-600 bg-slate-700/30 text-slate-200"
+                        ? isCorrect
+                          ? "border-green-500 bg-green-500/10 text-green-300"
                           : isSelected
-                            ? "border-cyan-500 bg-cyan-500/10 text-cyan-300"
-                            : "border-slate-600 bg-slate-700/30 text-slate-200 hover:border-cyan-400"
+                            ? "border-red-500 bg-red-500/10 text-red-300"
+                            : "border-slate-600 bg-slate-700/30 text-slate-200"
+                        : isSelected
+                          ? "border-cyan-500 bg-cyan-500/10 text-cyan-300"
+                          : "border-slate-600 bg-slate-700/30 text-slate-200 hover:border-cyan-400"
                         } ${!canChangeAnswer && isSelected ? "cursor-not-allowed" : ""}`}
                     >
                       <span className="font-bold">{optionLetter}.</span> {option}
@@ -348,10 +351,10 @@ export default function ExamPage({ session, onComplete, onExit }: ExamPageProps)
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   className={`p-4 rounded-xl mb-8 border-2 ${question.type === "theory"
-                      ? "bg-blue-500/10 border-blue-500 text-blue-300"
-                      : isAnswerCorrect()
-                        ? "bg-green-500/10 border-green-500 text-green-300"
-                        : "bg-red-500/10 border-red-500 text-red-300"
+                    ? "bg-blue-500/10 border-blue-500 text-blue-300"
+                    : isAnswerCorrect()
+                      ? "bg-green-500/10 border-green-500 text-green-300"
+                      : "bg-red-500/10 border-red-500 text-red-300"
                     }`}
                 >
                   {question.type === "theory" ? (

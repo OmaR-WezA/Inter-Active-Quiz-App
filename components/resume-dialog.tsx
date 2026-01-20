@@ -5,7 +5,7 @@ import { Clock, Plus } from "lucide-react"
 
 interface ResumeDialogProps {
   username: string
-  examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade"
+  examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade" | "ExtraExam"
   onResume: () => void
   onNew: () => void
   onCancel: () => void
