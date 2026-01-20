@@ -1298,4 +1298,4 @@ export const examData = {
 }
 
 export type ExamType = keyof typeof examData
-export type ExamTypeUnion = "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade"
+export type ExamTypeUnion = "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade" | "ExtraExam"
