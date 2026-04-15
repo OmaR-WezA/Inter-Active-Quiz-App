@@ -1,234 +1,188 @@
 "use client"
-import { motion } from "framer-motion"
-import { TrendingUp, Award, Calendar, LogOut } from "lucide-react"
-import { storage } from "@/lib/storage"
-import { useState } from "react"
 
-interface Props {
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import { TrendingUp, Award, Calendar, LogOut, Loader2 } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+
+interface ProfilePageProps {
   username: string
   onBackHome: () => void
+  onResume?: (exam: any) => void
+  onViewResult?: (resultId: string | number) => void
 }
 
-export default function ProfilePage({ username, onBackHome }: Props) {
-  const user = storage.getUser(username)
+export default function ProfilePage({ username, onBackHome, onResume, onViewResult }: ProfilePageProps) {
+  const [student, setStudent] = useState<any>(null)
+  const [exams, setExams] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [logoutConfirm, setLogoutConfirm] = useState(false)
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-white">لم يتم العثور على بيانات المستخدم</p>
-      </div>
-    )
-  }
+  useEffect(() => {
+    fetchProfileData()
+  }, [])
 
-  const completedExams = user.exams.filter((e) => e.status === "completed")
+  const fetchProfileData = async () => {
+    const studentId = localStorage.getItem("student_id")
+    if (!studentId) {
+      setLoading(false)
+      return
+    }
 
-  const examStats = {
-    total: user.exams.length,
-    completed: completedExams.length,
-    incomplete: user.exams.filter((e) => e.status === "incomplete").length,
-    avgScore:
-      completedExams.length > 0
-        ? (completedExams.reduce((sum, e) => sum + (e.percentage || 0), 0) / completedExams.length).toFixed(1)
-        : 0,
-    bestScore: completedExams.length > 0 ? Math.max(...completedExams.map((e) => e.percentage || 0)) : 0,
-    totalMcqCorrect: completedExams.reduce((sum, e) => sum + (e.mcqCorrect || 0), 0),
-    totalMcqAttempted: completedExams.reduce((sum, e) => sum + (e.mcqTotal || 0), 0),
+    try {
+      // Fetch student info
+      const { data: studentData } = await supabase
+        .from('students')
+        .select('*')
+        .eq('id', studentId)
+        .single()
+
+      setStudent(studentData)
+
+      // Fetch exams
+      const { data: examData } = await supabase
+        .from('exam_results')
+        .select('*')
+        .eq('student_id', studentId)
+        .order('completed_at', { ascending: false })
+
+      setExams(examData || [])
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleLogout = () => {
     localStorage.removeItem("last_username")
+    localStorage.removeItem("student_id")
+    localStorage.removeItem("student_email")
     onBackHome()
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-white gap-4">
+        <Loader2 className="w-12 h-12 animate-spin text-cyan-400" />
+        <p className="text-xl">جاري تحميل الملف الشخصي...</p>
+      </div>
+    )
+  }
+
+  if (!student) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-white">
+        <p>فشل تحميل بيانات المستخدم</p>
+      </div>
+    )
+  }
+
+  const completedExams = exams.filter(e => e.status === 'completed')
+
+  const avgScore = completedExams.length > 0
+    ? (completedExams.reduce((sum, e) => sum + (e.score / e.total_possible), 0) / completedExams.length * 100).toFixed(1)
+    : 0
+
+  const bestScore = completedExams.length > 0
+    ? Math.max(...completedExams.map(e => (e.score / e.total_possible) * 100)).toFixed(0)
+    : 0
+
   return (
-    <div className="min-h-screen px-4 py-12">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-4xl mx-auto"
-      >
-        {/* Header with Navigation Buttons */}
-        <motion.div className="flex items-center justify-between mb-8">
-          <motion.button
-            onClick={onBackHome}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-2 text-slate-300 hover:text-cyan-400 transition-colors"
-          >
-            <span>←</span>
-            <span>العودة للرئيسية</span>
-          </motion.button>
-          <motion.button
-            onClick={() => setLogoutConfirm(true)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-2 text-slate-300 hover:text-red-400 transition-colors"
-          >
+    <div className="min-h-screen px-4 py-12 text-right" dir="rtl">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <button onClick={onBackHome} className="text-slate-300 hover:text-cyan-400 transition-colors">← العودة للاختيار</button>
+          <button onClick={() => setLogoutConfirm(true)} className="flex items-center gap-2 text-slate-300 hover:text-red-400 transition-colors">
             <LogOut className="w-5 h-5" />
             <span>تسجيل خروج</span>
-          </motion.button>
-        </motion.div>
+          </button>
+        </div>
 
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-8 mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">{user.name}</h1>
-          <p className="text-slate-400">انضم في {new Date(user.joinDate).toLocaleDateString("ar-EG")}</p>
+          <h1 className="text-4xl font-bold text-white mb-2">{student.full_name}</h1>
+          <p className="text-slate-400">كود الطالب: {student.student_code}</p>
         </div>
 
         {/* Stats */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          {[
-            { icon: TrendingUp, label: "إجمالي", value: examStats.total },
-            { icon: Award, label: "مكتملة", value: examStats.completed, color: "text-green-400" },
-            { icon: Award, label: "غير مكتملة", value: examStats.incomplete, color: "text-yellow-400" },
-            { icon: Award, label: "المتوسط", value: `${examStats.avgScore}%` },
-          ].map((stat, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6"
-            >
-              <stat.icon className="w-8 h-8 text-cyan-400 mb-3" />
-              <p className="text-slate-400 text-sm mb-1">{stat.label}</p>
-              <p className={`text-3xl font-bold ${stat.color ? stat.color : "text-white"}`}>{stat.value}</p>
-            </motion.div>
-          ))}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+            <TrendingUp className="w-8 h-8 text-cyan-400 mb-3" />
+            <p className="text-slate-400 text-sm mb-1">إجمالي المحاولات</p>
+            <p className="text-3xl font-bold text-white">{completedExams.length}</p>
+          </div>
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+            <Award className="w-8 h-8 text-green-400 mb-3" />
+            <p className="text-slate-400 text-sm mb-1">متوسط الدرجات</p>
+            <p className="text-3xl font-bold text-green-400">{avgScore}%</p>
+          </div>
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+            <Award className="w-8 h-8 text-yellow-400 mb-3" />
+            <p className="text-slate-400 text-sm mb-1">أفضل نتيجة</p>
+            <p className="text-3xl font-bold text-yellow-400">{bestScore}%</p>
+          </div>
         </div>
 
-        {examStats.totalMcqAttempted > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-8 mb-8"
-          >
-            <h2 className="text-2xl font-bold text-white mb-6">إحصائيات الأداء العام</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-slate-700/30 rounded-lg p-4">
-                <p className="text-slate-400 text-sm mb-2">إجمالي أسئلة MCQ الصحيحة</p>
-                <p className="text-3xl font-bold text-cyan-400">
-                  {examStats.totalMcqCorrect} / {examStats.totalMcqAttempted}
-                </p>
-                <p className="text-sm text-slate-400 mt-1">
-                  {examStats.totalMcqAttempted > 0
-                    ? ((examStats.totalMcqCorrect / examStats.totalMcqAttempted) * 100).toFixed(1)
-                    : 0}
-                  %
-                </p>
-              </div>
-              <div className="bg-slate-700/30 rounded-lg p-4">
-                <p className="text-slate-400 text-sm mb-2">أفضل درجة</p>
-                <p className="text-3xl font-bold text-green-400">{examStats.bestScore.toFixed(0)}%</p>
-                <p className="text-sm text-slate-400 mt-1">من إجمالي الامتحانات</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Exam History */}
-        {user.exams.length > 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-8"
-          >
-            <h2 className="text-2xl font-bold text-white mb-6">سجل الامتحانات</h2>
+        {/* History */}
+        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-8">
+          <h2 className="text-2xl font-bold text-white mb-6">سجل المحاولات</h2>
+          {exams.length > 0 ? (
             <div className="space-y-4">
-              {user.exams.map((exam, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 + idx * 0.05 }}
-                  className={`rounded-lg p-4 flex items-center justify-between hover:bg-slate-700/50 transition-all ${exam.status === "incomplete" ? "bg-yellow-500/10 border border-yellow-500/50" : "bg-slate-700/30"
-                    }`}
-                >
-                  <div>
-                    <p className="font-semibold text-white">{exam.examType === "final" ? "امتحان نهائي" : "MCQ"}</p>
-                    <p className="text-slate-400 text-sm flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      {new Date(exam.startedAt).toLocaleDateString("ar-EG", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                    {exam.status === "incomplete" && (
-                      <p className="text-yellow-400 text-sm font-semibold">لم يكتمل - تم مغادرة الامتحان</p>
-                    )}
-                    {exam.status === "completed" && exam.mcqTotal !== undefined && (
-                      <p className="text-cyan-400 text-sm">
-                        {exam.mcqCorrect}/{exam.mcqTotal} MCQ صحيحة
+              {exams.map((exam, idx) => {
+                const perc = (exam.score / exam.total_possible) * 100
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => exam.status === 'completed' ? onViewResult?.(exam.id) : onResume?.(exam)}
+                    className={`bg-slate-700/30 rounded-lg p-4 flex items-center justify-between border-r-4 transition-all cursor-pointer ${exam.status === 'incomplete' ? 'border-yellow-500 hover:bg-yellow-500/10 shadow-lg shadow-yellow-500/5' : 'border-cyan-500 hover:bg-cyan-500/10'}`}
+                  >
+                    <div>
+                      <p className="font-semibold text-white">
+                        {exam.exam_name}
+                        {exam.status === 'incomplete' ? (
+                          <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded ml-2 font-bold uppercase tracking-tight">قيد التقدم</span>
+                        ) : (
+                          <span className="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded ml-2 font-bold uppercase tracking-tight">تفاصيل</span>
+                        )}
                       </p>
-                    )}
+                      <p className="text-slate-400 text-sm flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        {new Date(exam.completed_at).toLocaleDateString("ar-EG")}
+                      </p>
+                    </div>
+                    <div className="text-left">
+                      {exam.status === 'completed' ? (
+                        <>
+                          <p className="text-2xl font-bold text-cyan-400">{perc.toFixed(0)}%</p>
+                          <p className="text-sm text-slate-400">{exam.score}/{exam.total_possible}</p>
+                        </>
+                      ) : (
+                        <p className="text-yellow-400 font-medium pt-2">اضغط للمتابعة</p>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    {exam.status === "completed" ? (
-                      <>
-                        <p className="text-2xl font-bold text-cyan-400">{exam.percentage?.toFixed(0)}%</p>
-                        <p className="text-sm text-slate-400">
-                          {exam.score}/{exam.totalMarks}
-                        </p>
-                      </>
-                    ) : (
-                      <p className="text-lg font-semibold text-yellow-400">قيد الانتظار</p>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
+                )
+              })}
             </div>
-          </motion.div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-slate-300 text-lg">لم تكمل أي امتحانات بعد</p>
-          </div>
-        )}
+          ) : (
+            <p className="text-slate-400 text-center py-8">لا يوجد سجل محاولات حالياً.</p>
+          )}
+        </div>
       </motion.div>
 
       {/* Logout Confirmation */}
       {logoutConfirm && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
-          onClick={() => setLogoutConfirm(false)}
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-md"
-          >
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setLogoutConfirm(false)}>
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-md w-full" onClick={e => e.stopPropagation()}>
             <h3 className="text-2xl font-bold text-white mb-4">تسجيل الخروج</h3>
             <p className="text-slate-300 mb-6">هل أنت متأكد من رغبتك في تسجيل الخروج؟</p>
             <div className="flex gap-4">
-              <motion.button
-                onClick={() => setLogoutConfirm(false)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-all"
-              >
-                إلغاء
-              </motion.button>
-              <motion.button
-                onClick={handleLogout}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all"
-              >
-                تأكيد الخروج
-              </motion.button>
+              <button onClick={() => setLogoutConfirm(false)} className="flex-1 py-3 bg-slate-700 text-white rounded-lg">إلغاء</button>
+              <button onClick={handleLogout} className="flex-1 py-3 bg-red-600 text-white rounded-lg">تأكيد الخروج</button>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
     </div>
   )

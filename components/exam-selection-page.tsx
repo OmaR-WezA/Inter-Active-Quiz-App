@@ -1,26 +1,65 @@
 "use client"
 
-import { motion } from "framer-motion"
-import { ArrowRight, Clock, BookMarked } from "lucide-react"
-import { examData } from "@/lib/exam-data"
+import React from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { ArrowLeft, BookMarked, User, Clock, FileText, ChevronRight, CheckCircle } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+import { toast } from "sonner"
 
 interface Props {
-  onSelect: (examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade", correctionMode: "immediate" | "final") => void
+  onSelect: (term: number, examName: string, correctionMode: "immediate" | "final") => void
   onBack: () => void
+  onViewProfile: () => void
 }
 
-export default function ExamSelectionPage({ onSelect, onBack }: Props) {
-  const [selectedExam, setSelectedExam] = React.useState<"final" | "mcq" | "pythonAdvanced" | "pythonTopGrade" | null>(null)
+export default function ExamSelectionPage({ onSelect, onBack, onViewProfile }: Props) {
+  const [selectedTerm, setSelectedTerm] = React.useState<number | null>(null)
+  const [availableExams, setAvailableExams] = React.useState<string[]>([])
+  const [selectedExam, setSelectedExam] = React.useState<string | null>(null)
   const [correctionMode, setCorrectionMode] = React.useState<"immediate" | "final" | null>(null)
+  const [loading, setLoading] = React.useState(false)
 
   React.useEffect(() => {
-    if (selectedExam && correctionMode) {
+    if (selectedTerm !== null) {
+      fetchExams(selectedTerm)
+    }
+  }, [selectedTerm])
+
+  const fetchExams = async (term: number) => {
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('exam_name')
+        .eq('term', term)
+
+      if (error) throw error
+
+      // Get unique names
+      const names = Array.from(new Set(data.map(q => q.exam_name)))
+      setAvailableExams(names)
+    } catch (err: any) {
+      toast.error("فشل تحميل قائمة الاختبارات")
+      console.error("Database Fetch Error Details:", {
+        message: err.message,
+        code: err.code,
+        details: err.details,
+        hint: err.hint,
+        error: err
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  React.useEffect(() => {
+    if (selectedTerm !== null && selectedExam && correctionMode) {
       const timer = setTimeout(() => {
-        onSelect(selectedExam, correctionMode)
+        onSelect(selectedTerm, selectedExam, correctionMode)
       }, 300)
       return () => clearTimeout(timer)
     }
-  }, [selectedExam, correctionMode, onSelect])
+  }, [selectedTerm, selectedExam, correctionMode, onSelect])
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
@@ -30,106 +69,188 @@ export default function ExamSelectionPage({ onSelect, onBack }: Props) {
         transition={{ duration: 0.5 }}
         className="w-full max-w-6xl"
       >
-        {/* Back Button */}
-        <motion.button
-          onClick={onBack}
-          whileHover={{ x: -4 }}
-          className="flex items-center gap-2 text-slate-300 hover:text-cyan-400 mb-12 transition-colors"
-        >
-          <ArrowRight className="w-5 h-5 rotate-180" />
-          رجوع
-        </motion.button>
-
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-white mb-4">اختر الامتحان</h1>
-          <p className="text-slate-300 text-lg">اختر نوع الامتحان الذي تريد حله</p>
-        </div>
-
-        {!selectedExam ? (
-          // Exam Selection
-          <div className="grid md:grid-cols-2 gap-8 mb-12">
-            {Object.entries(examData).map(([key, exam]) => (
-              <motion.button
-                key={key}
-                onClick={() => setSelectedExam(key as "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade")}
-                whileHover={{ y: -8 }}
-                whileTap={{ scale: 0.98 }}
-                className="bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700 hover:border-cyan-400 rounded-2xl p-8 text-left transition-all group overflow-hidden"
-              >
-                <div className="relative z-10">
-                  <BookMarked className="w-12 h-12 text-cyan-400 mb-4" />
-                  <h2 className="text-2xl font-bold text-white mb-2">{exam.name}</h2>
-                  <p className="text-slate-300 mb-6">{exam.description}</p>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-slate-300">
-                      <Clock className="w-5 h-5 text-cyan-400" />
-                      <span>{exam.time}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-slate-300">
-                      <span className="font-semibold text-cyan-400">{exam.questions.length}</span>
-                      <span>سؤال</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/10 to-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </motion.button>
-            ))}
-          </div>
-        ) : (
-          // Correction Mode Selection
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="max-w-2xl mx-auto"
+        {/* Top Header Actions */}
+        <div className="flex items-center justify-between mb-8">
+          <motion.button
+            onClick={onViewProfile}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-slate-300 transition-all hover:border-cyan-500 hover:text-cyan-400"
           >
-            <h2 className="text-2xl font-bold text-white mb-8 text-center">اختر طريقة التصحيح</h2>
+            <User className="w-5 h-5" />
+            <span>الملف الشخصي</span>
+          </motion.button>
 
-            <div className="space-y-4">
-              {[
-                {
-                  mode: "immediate" as const,
-                  title: "التصحيح الفوري",
-                  desc: "عرض الإجابة الصحيحة بعد كل سؤال مباشرة",
-                },
-                {
-                  mode: "final" as const,
-                  title: "التصحيح النهائي",
-                  desc: "عرض النتائج والإجابات الصحيحة بعد انتهاء الامتحان كاملاً",
-                },
-              ].map(({ mode, title, desc }) => (
-                <motion.button
-                  key={mode}
-                  onClick={() => setCorrectionMode(mode)}
-                  whileHover={{ x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-slate-800 to-slate-900 border-2 border-slate-700 hover:border-cyan-400 rounded-xl p-6 text-left transition-all group"
-                >
-                  <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-                  <p className="text-slate-300">{desc}</p>
-                </motion.button>
-              ))}
-            </div>
-
+          {selectedTerm !== null && (
             <motion.button
               onClick={() => {
-                setSelectedExam(null)
-                setCorrectionMode(null)
+                if (selectedExam !== null) setSelectedExam(null)
+                else setSelectedTerm(null)
               }}
               whileHover={{ x: -4 }}
-              className="flex items-center gap-2 text-slate-300 hover:text-cyan-400 mt-8 transition-colors"
+              className="flex items-center gap-2 text-slate-300 hover:text-cyan-400 transition-colors"
             >
-              <ArrowRight className="w-5 h-5 rotate-180" />
               رجوع
+              <ArrowLeft className="w-5 h-5" />
             </motion.button>
-          </motion.div>
-        )}
+          )}
+        </div>
+
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-white mb-2">اختر الاختبار</h1>
+          <p className="text-slate-300 text-lg">راجع معلوماتك وتفوق في دراستك</p>
+        </div>
+
+        <AnimatePresence mode="wait">
+          {selectedTerm === null ? (
+            // Term Selection
+            <motion.div
+              key="term-selection"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="grid md:grid-cols-2 gap-8"
+            >
+              {[
+                {
+                  id: 1,
+                  name: "الترم الأول",
+                  description: "مراجعة شاملة لأساسيات البرمجة بلغة Python",
+                  icon: <BookMarked className="w-12 h-12 text-blue-400" />
+                },
+                {
+                  id: 2,
+                  name: "الترم الثاني",
+                  description: "مراجعة شاملة لمادة البرمجة بلغة C",
+                  icon: <BookMarked className="w-12 h-12 text-cyan-400" />
+                }
+              ].map((term) => (
+                <motion.button
+                  key={term.id}
+                  onClick={() => setSelectedTerm(term.id)}
+                  whileHover={{ y: -8 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`bg-gradient-to-br from-slate-800/50 to-slate-900 border-2 border-slate-700 hover:border-cyan-400 rounded-2xl p-8 text-left transition-all group relative overflow-hidden`}
+                >
+                  <div className="relative z-10 text-right">
+                    <div className="flex justify-end mb-4">{term.icon}</div>
+                    <h2 className="text-2xl font-bold text-white mb-2">{term.name}</h2>
+                    <p className="text-slate-300 mb-6">{term.description}</p>
+                    <div className="flex items-center justify-end text-cyan-400 font-semibold gap-2">
+                      اختر الترم <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/5 to-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </motion.button>
+              ))}
+            </motion.div>
+          ) : selectedExam === null ? (
+            // Exam Selection
+            <motion.div
+              key="exam-selection"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="max-w-3xl mx-auto"
+            >
+              <div className="flex items-center justify-between mb-8 flex-row-reverse">
+                <h2 className="text-2xl font-bold text-white">اختر الاختبار المتاح</h2>
+                <button onClick={() => setSelectedTerm(null)} className="text-slate-400 hover:text-white transition-colors">تغيير الترم</button>
+              </div>
+
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-slate-400">جاري تحميل الاختبارات...</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {availableExams.map((exam) => (
+                    <motion.button
+                      key={exam}
+                      onClick={() => setSelectedExam(exam)}
+                      whileHover={{ scale: 1.02, x: -4 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full bg-slate-800/40 border border-slate-700 hover:border-cyan-500 rounded-xl p-6 text-right transition-all flex items-center justify-between group"
+                    >
+                      <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <h3 className="text-xl font-bold text-white group-hover:text-cyan-400 transition-colors">{exam}</h3>
+                          <p className="text-sm text-slate-400 italic">مراجعة شاملة للوحدة</p>
+                        </div>
+                        <div className="p-3 bg-cyan-500/10 rounded-lg">
+                          <FileText className="w-6 h-6 text-cyan-400" />
+                        </div>
+                      </div>
+                    </motion.button>
+                  ))}
+                  {availableExams.length === 0 && (
+                    <div className="text-center py-12 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">
+                      <p className="text-slate-500">لا توجد اختبارات متاحة لهذا الترم حالياً</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          ) : (
+            // Correction Mode Selection
+            <motion.div
+              key="mode-selection"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="max-w-2xl mx-auto"
+            >
+              <div className="flex items-center justify-between mb-8 flex-row-reverse">
+                <h2 className="text-2xl font-bold text-white">طريقة التصحيح</h2>
+                <button onClick={() => setSelectedExam(null)} className="text-slate-400 hover:text-white transition-colors">تغيير الاختبار</button>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  {
+                    mode: "immediate" as const,
+                    title: "التصحيح الفوري",
+                    desc: "عرض الإجابة الصحيحة بعد كل سؤال مباشرة",
+                    icon: <Clock className="w-6 h-6" />
+                  },
+                  {
+                    mode: "final" as const,
+                    title: "التصحيح النهائي",
+                    desc: "عرض النتائج بعد انتهاء الامتحان كاملاً",
+                    icon: <CheckCircle className="w-6 h-6" />
+                  },
+                ].map(({ mode, title, desc, icon }) => (
+                  <motion.button
+                    key={mode}
+                    onClick={() => setCorrectionMode(mode)}
+                    whileHover={{ scale: 1.02, x: -4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full bg-slate-800/40 border border-slate-700 hover:border-cyan-400 rounded-xl p-6 text-right transition-all group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ChevronRight className="w-6 h-6" />
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <h3 className="text-xl font-bold text-white">{title}</h3>
+                          <p className="text-slate-300 text-sm">{desc}</p>
+                        </div>
+                        <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400">
+                          {icon}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   )
 }
-
-import React from "react"

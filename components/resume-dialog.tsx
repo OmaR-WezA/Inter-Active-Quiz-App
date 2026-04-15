@@ -5,13 +5,14 @@ import { Clock, Plus } from "lucide-react"
 
 interface ResumeDialogProps {
   username: string
-  examType: "final" | "mcq" | "pythonAdvanced" | "pythonTopGrade" | "ExtraExam"
+  term: number
+  examName: string
   onResume: () => void
   onNew: () => void
   onCancel: () => void
 }
 
-export default function ResumeDialog({ username, examType, onResume, onNew, onCancel }: ResumeDialogProps) {
+export default function ResumeDialog({ username, term, examName, onResume, onNew, onCancel }: ResumeDialogProps) {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <motion.div
@@ -31,7 +32,7 @@ export default function ResumeDialog({ username, examType, onResume, onNew, onCa
               <Clock className="w-12 h-12 text-yellow-400" />
             </motion.div>
             <h2 className="text-2xl font-bold text-white mb-2">امتحان قيد الانتظار</h2>
-            <p className="text-slate-300">لديك امتحان {examType === "final" ? "نهائي" : "MCQ"} لم يكتمل</p>
+            <p className="text-slate-300">لديك امتحان {examName} لم يكتمل</p>
           </div>
 
           <p className="text-slate-300 text-center mb-8">هل تريد استئناف الامتحان من حيث توقفت أم بدء امتحان جديد؟</p>
