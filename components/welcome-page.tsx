@@ -132,9 +132,8 @@ export default function WelcomePage({ onStart, onOpenPDFLibrary }: Props) {
             <BookOpen className="w-16 h-16 text-white" />
           </motion.div>
           <h1 className="text-5xl font-black text-white mb-2 tracking-tight">
-            C Programming Pro
+            Interactive Quiz App
           </h1>
-          <p className="text-slate-400 text-lg font-medium">مراجعة مادة البرمجة بلغة C</p>
         </div>
 
         <div className="bg-slate-800/40 backdrop-blur-2xl border border-slate-700/50 rounded-[2.5rem] p-8 md:p-10 shadow-2xl">
