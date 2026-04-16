@@ -110,8 +110,8 @@ export default function LeaderboardPage({ onBackHome, currentUsername }: Leaderb
                         <Trophy className="w-12 h-12 text-amber-400" />
                         <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: "linear" }} className="absolute -inset-4 border-2 border-dashed border-amber-400/30 rounded-full" />
                     </div>
-                    <h1 className="text-4xl font-black text-white mb-3 tracking-tight">لوحة الشرف للأبطال</h1>
-                    <p className="text-slate-400 text-lg">أفضل 10 طلاب متفوقين في الاختبارات</p>
+                    <h1 className="text-4xl font-black text-white mb-3 tracking-tight">لوحة الترتيب</h1>
+                    <p className="text-slate-400 text-lg">اعلى 10 طلاب في الترتيب</p>
                 </div>
 
                 {/* Loading State */}
@@ -138,10 +138,10 @@ export default function LeaderboardPage({ onBackHome, currentUsername }: Leaderb
                                         initial={{ opacity: 0, x: -30 }}
                                         animate={{ opacity: 1, x: 0, transition: { delay: index * 0.1 } }}
                                         className={`relative p-5 rounded-[2rem] border overflow-hidden flex items-center justify-between gap-4 transition-all ${isCurrentUser
-                                                ? "bg-gradient-to-l from-amber-500/20 to-amber-900/10 border-amber-500/50 shadow-lg shadow-amber-500/10 scale-[1.02]"
-                                                : index < 3
-                                                    ? "bg-slate-800/80 border-slate-700 hover:border-amber-500/30 shadow-xl"
-                                                    : "bg-slate-800/40 border-slate-700/50 hover:bg-slate-800"
+                                            ? "bg-gradient-to-l from-amber-500/20 to-amber-900/10 border-amber-500/50 shadow-lg shadow-amber-500/10 scale-[1.02]"
+                                            : index < 3
+                                                ? "bg-slate-800/80 border-slate-700 hover:border-amber-500/30 shadow-xl"
+                                                : "bg-slate-800/40 border-slate-700/50 hover:bg-slate-800"
                                             }`}
                                     >
                                         {isCurrentUser && (
@@ -150,8 +150,8 @@ export default function LeaderboardPage({ onBackHome, currentUsername }: Leaderb
 
                                         <div className="flex items-center gap-5">
                                             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${index === 0 ? "bg-yellow-500/10" :
-                                                    index === 1 ? "bg-slate-300/10" :
-                                                        index === 2 ? "bg-amber-700/10" : "bg-slate-800"
+                                                index === 1 ? "bg-slate-300/10" :
+                                                    index === 2 ? "bg-amber-700/10" : "bg-slate-800"
                                                 }`}>
                                                 {getRankIcon(index)}
                                             </div>
