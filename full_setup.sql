@@ -272,3 +272,22 @@ INSERT INTO questions (term, exam_name, type, question_text, options, correct_an
 (2, 'Comprehensive Revision', 'codeoutput', 'What is output: int a[]={1,2,3}; printf("%d", *(a+1));', NULL, '2', 2),
 (2, 'Comprehensive Revision', 'codeoutput', 'What is output: int x=5; printf("%d", x << 1);', NULL, '10', 2),
 (2, 'Comprehensive Revision', 'codeoutput', 'What is output: printf("%d", 10 > 5 && 5 < 2);', NULL, '0', 2);
+
+-- 8. Create Feedback table (Portfolio Testimonials)
+DROP TABLE IF EXISTS feedback;
+CREATE TABLE feedback (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_name TEXT NOT NULL,
+    phone_number TEXT NOT NULL,
+    instructor_rating INTEGER NOT NULL CHECK (instructor_rating >= 1 AND instructor_rating <= 5),
+    good_things TEXT NOT NULL,
+    needs_improvement TEXT NOT NULL,
+    platform_feedback TEXT,
+    allow_public BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS for feedback
+ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public Insert Feedback" ON feedback FOR INSERT WITH CHECK (true);
+CREATE POLICY "Public Select Feedback" ON feedback FOR SELECT USING (true);

@@ -9,9 +9,12 @@ import ResultsPage from "@/components/results-page"
 import ProfilePage from "@/components/profile-page"
 import ResumeDialog from "@/components/resume-dialog"
 import StudentPDFLibrary from "@/components/student-pdf-library"
+import FeedbackPage from "@/components/feedback-page"
+import LeaderboardPage from "@/components/leaderboard-page"
+import Navbar from "@/components/navbar"
 import { supabase } from "@/lib/supabase"
 
-type PageType = "welcome" | "selection" | "exam" | "results" | "profile" | "resume-dialog" | "pdf-library"
+type PageType = "welcome" | "selection" | "exam" | "results" | "profile" | "resume-dialog" | "pdf-library" | "feedback" | "leaderboard"
 
 interface ExamSession {
   username: string
@@ -178,9 +181,41 @@ export default function Home() {
     setCurrentPage("pdf-library")
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem("student_id")
+    localStorage.removeItem("student_name")
+    localStorage.removeItem("student_email")
+    localStorage.removeItem("quiz_current_page")
+    localStorage.removeItem("quiz_exam_session")
+    setExamSession(null)
+    setCurrentPage("welcome")
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+      {currentPage !== "exam" && (
+        <Navbar
+          username={examSession?.username}
+          isLoggedIn={!!examSession}
+          activePage={currentPage}
+          onNavigate={(page) => {
+            if (page === "welcome" && examSession) {
+              setCurrentPage("selection")
+            } else {
+              setCurrentPage(page)
+            }
+            localStorage.setItem("quiz_current_page", page)
+          }}
+          onLogout={handleLogout}
+        />
+      )}
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className={currentPage !== "exam" ? "pt-24" : ""}
+      >
         {currentPage === "welcome" && <WelcomePage onStart={handleStartExam} onOpenPDFLibrary={handleOpenPDFLibrary} />}
         {currentPage === "selection" && examSession && (
           <ExamSelectionPage
@@ -241,6 +276,12 @@ export default function Home() {
         )}
         {currentPage === "pdf-library" && (
           <StudentPDFLibrary onBack={handleBackHome} />
+        )}
+        {currentPage === "feedback" && (
+          <FeedbackPage onBack={handleBackHome} />
+        )}
+        {currentPage === "leaderboard" && (
+          <LeaderboardPage onBackHome={handleBackHome} currentUsername={examSession?.username} />
         )}
       </motion.div>
     </main>

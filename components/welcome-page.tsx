@@ -3,16 +3,17 @@
 import type React from "react"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { BookOpen, CheckCircle, FileText, User, Hash, Search } from "lucide-react"
+import { BookOpen, CheckCircle, FileText, User, Hash, Search, MessageSquare } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 
 interface Props {
   onStart: (username: string) => void
   onOpenPDFLibrary?: () => void
+  onFeedback?: () => void
 }
 
-export default function WelcomePage({ onStart, onOpenPDFLibrary }: Props) {
+export default function WelcomePage({ onStart, onOpenPDFLibrary, onFeedback }: Props) {
   const [studentCode, setStudentCode] = useState("")
   const [fullName, setFullName] = useState("")
   const [loading, setLoading] = useState(false)
@@ -60,7 +61,7 @@ export default function WelcomePage({ onStart, onOpenPDFLibrary }: Props) {
 
     setLoading(true)
     try {
-      const email = `${studentCode.trim()}@student.uza.com`
+      const email = `${studentCode.trim()}@student.weza.com`
 
       const { data, error } = await supabase
         .from('students')
@@ -154,10 +155,13 @@ export default function WelcomePage({ onStart, onOpenPDFLibrary }: Props) {
                   </div>
                   <div className="relative group">
                     <input
-                      type="text"
+                      type="tel"
                       required
                       value={studentCode}
-                      onChange={(e) => setStudentCode(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '')
+                        setStudentCode(val)
+                      }}
                       placeholder="اكتب الكود هنا..."
                       className="w-full px-8 py-5 bg-slate-900/60 border-2 border-slate-700 rounded-2xl text-white text-xl text-center font-bold focus:border-blue-500 focus:bg-slate-900 outline-none transition-all placeholder:text-slate-600"
                       autoFocus
@@ -275,7 +279,7 @@ export default function WelcomePage({ onStart, onOpenPDFLibrary }: Props) {
         </div>
 
         {/* Branding */}
-        <div className="mt-16 text-center">
+        <div className="mt-12 text-center">
           <p className="text-slate-500 text-xs font-bold tracking-[0.4em] uppercase">
             Developed by Weza Production
           </p>

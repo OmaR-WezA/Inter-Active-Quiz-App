@@ -17,6 +17,7 @@ export default function ProfilePage({ username, onBackHome, onResume, onViewResu
   const [exams, setExams] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [logoutConfirm, setLogoutConfirm] = useState(false)
+  const [personalRank, setPersonalRank] = useState<number | null>(null)
 
   useEffect(() => {
     fetchProfileData()
@@ -47,6 +48,34 @@ export default function ProfilePage({ username, onBackHome, onResume, onViewResu
         .order('completed_at', { ascending: false })
 
       setExams(examData || [])
+
+      // Fetch rank
+      const { data: allData } = await supabase
+        .from('exam_results')
+        .select('score, total_possible, student_id')
+        .eq('status', 'completed')
+
+      if (allData) {
+        const studentMap = new Map<string, { totalScore: number, totalPossible: number }>()
+        allData.forEach((result: any) => {
+          if (!studentMap.has(result.student_id)) {
+            studentMap.set(result.student_id, { totalScore: 0, totalPossible: 0 })
+          }
+          const current = studentMap.get(result.student_id)!
+          current.totalScore += result.score
+          current.totalPossible += result.total_possible
+        })
+
+        const rankedArray = Array.from(studentMap.entries()).map(([id, s]) => ({
+          id,
+          percentage: s.totalPossible > 0 ? (s.totalScore / s.totalPossible) * 100 : 0
+        }))
+
+        rankedArray.sort((a, b) => b.percentage - a.percentage)
+        const rankIndex = rankedArray.findIndex(r => r.id === studentId)
+        setPersonalRank(rankIndex !== -1 ? rankIndex + 1 : null)
+      }
+
     } catch (err) {
       console.error(err)
     } finally {
@@ -106,7 +135,15 @@ export default function ProfilePage({ username, onBackHome, onResume, onViewResu
         </div>
 
         {/* Stats */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-full h-1 bg-gradient-to-r from-amber-400 to-amber-600" />
+            <Award className="w-8 h-8 text-amber-500 mb-3" />
+            <p className="text-slate-400 text-sm mb-1">الترتيب الشخصي</p>
+            <p className="text-3xl font-black text-amber-500">
+              {personalRank !== null ? `#${personalRank}` : "-"}
+            </p>
+          </div>
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
             <TrendingUp className="w-8 h-8 text-cyan-400 mb-3" />
             <p className="text-slate-400 text-sm mb-1">إجمالي المحاولات</p>
