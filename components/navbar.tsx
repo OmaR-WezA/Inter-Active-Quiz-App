@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { User, BookOpen, Star, Trophy, LogOut, Home, LogIn, Menu, X } from "lucide-react"
+import { User, BookOpen, Star, Trophy, LogOut, Home, LogIn, Menu, X, Gamepad2 } from "lucide-react"
 
 interface NavbarProps {
     username?: string | null
@@ -22,11 +22,13 @@ export default function Navbar({ username, onNavigate, onLogout, activePage, isL
             { id: "profile", label: "الملف الشخصي", icon: User },
             { id: "feedback", label: "التقييم", icon: Star },
             { id: "leaderboard", label: "جدول الترتيب", icon: Trophy, disabled: false },
+            { id: "games-hub", label: "التحديات والألعاب", icon: Gamepad2, disabled: false },
         ]
         : [
             { id: "welcome", label: "الرئيسية", icon: Home },
             { id: "pdf-library", label: "المكتبة", icon: BookOpen },
             { id: "leaderboard", label: "جدول الترتيب", icon: Trophy, disabled: false },
+            { id: "games-hub", label: "التحديات والألعاب", icon: Gamepad2, disabled: false },
         ]
 
     const handleNavigation = (id: string) => {

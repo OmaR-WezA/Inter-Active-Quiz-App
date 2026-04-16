@@ -11,10 +11,13 @@ import ResumeDialog from "@/components/resume-dialog"
 import StudentPDFLibrary from "@/components/student-pdf-library"
 import FeedbackPage from "@/components/feedback-page"
 import LeaderboardPage from "@/components/leaderboard-page"
+import GamesHubPage from "@/components/games-hub-page"
+import MemoryGamePage from "@/components/memory-game-page"
+import TicTacToePage from "@/components/tic-tac-toe-page"
 import Navbar from "@/components/navbar"
 import { supabase } from "@/lib/supabase"
 
-type PageType = "welcome" | "selection" | "exam" | "results" | "profile" | "resume-dialog" | "pdf-library" | "feedback" | "leaderboard"
+type PageType = "welcome" | "selection" | "exam" | "results" | "profile" | "resume-dialog" | "pdf-library" | "feedback" | "leaderboard" | "games-hub" | "game" | "tic-tac-toe"
 
 interface ExamSession {
   username: string
@@ -282,6 +285,24 @@ export default function Home() {
         )}
         {currentPage === "leaderboard" && (
           <LeaderboardPage onBackHome={handleBackHome} currentUsername={examSession?.username} />
+        )}
+        {currentPage === "games-hub" && (
+          <GamesHubPage
+            onBackHome={handleBackHome}
+            onSelectGame={(gameId) => setCurrentPage(gameId as PageType)}
+          />
+        )}
+        {currentPage === "game" && (
+          <MemoryGamePage
+            onBackHome={() => setCurrentPage("games-hub")}
+            onWinAction={() => setCurrentPage("feedback")}
+          />
+        )}
+        {currentPage === "tic-tac-toe" && (
+          <TicTacToePage
+            onBackHome={() => setCurrentPage("games-hub")}
+            onWinAction={() => setCurrentPage("feedback")}
+          />
         )}
       </motion.div>
     </main>
