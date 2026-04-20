@@ -304,6 +304,7 @@ export default function Home() {
             onWinAction={() => setCurrentPage("feedback")}
           />
         )}
+        {/* Removed Bug Hunter */}
       </motion.div>
     </main>
   )

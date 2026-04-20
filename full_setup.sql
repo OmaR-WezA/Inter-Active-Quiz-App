@@ -2,9 +2,9 @@
 -- Run this in Supabase SQL Editor
 
 -- 1. Drop existing tables for a clean slate
-DROP TABLE IF EXISTS exam_results CASCADE;
-DROP TABLE IF EXISTS questions CASCADE;
-DROP TABLE IF EXISTS students CASCADE;
+-- DROP TABLE IF EXISTS exam_results CASCADE;
+-- DROP TABLE IF EXISTS questions CASCADE;
+-- DROP TABLE IF EXISTS students CASCADE;
 
 -- 2. Create Students table
 CREATE TABLE students (

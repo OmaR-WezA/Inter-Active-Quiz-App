@@ -27,6 +27,7 @@ export default function Navbar({ username, onNavigate, onLogout, activePage, isL
         : [
             { id: "welcome", label: "الرئيسية", icon: Home },
             { id: "pdf-library", label: "المكتبة", icon: BookOpen },
+            { id: "feedback", label: "التقييم", icon: Star },
             { id: "leaderboard", label: "جدول الترتيب", icon: Trophy, disabled: false },
             { id: "games-hub", label: "التحديات والألعاب", icon: Gamepad2, disabled: false },
         ]

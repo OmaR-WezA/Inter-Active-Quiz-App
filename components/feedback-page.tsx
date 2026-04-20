@@ -131,7 +131,7 @@ export default function FeedbackPage({ onBack }: FeedbackPageProps) {
             <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                className="bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-[2.5rem] p-10 max-w-3xl w-full relative overflow-hidden shadow-2xl"
+                className="bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-10 max-w-3xl w-full relative overflow-hidden shadow-2xl"
             >
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500" />
 
@@ -139,8 +139,8 @@ export default function FeedbackPage({ onBack }: FeedbackPageProps) {
                     <div className="inline-flex p-4 rounded-3xl bg-cyan-500/10 border border-cyan-500/20 mb-6 group">
                         <Sparkles className="w-10 h-10 text-cyan-400 group-hover:rotate-12 transition-transform" />
                     </div>
-                    <h1 className="text-4xl font-black text-white mb-3">تقييمك الشخصي</h1>
-                    <p className="text-slate-400">رأيك يساعدنا على التطوير المستمر</p>
+                    <h1 className="text-3xl sm:text-4xl font-black text-white mb-3">تقييمك الشخصي</h1>
+                    <p className="text-slate-400 text-sm sm:text-base">رأيك يساعدنا على التطوير المستمر</p>
                 </div>
 
                 {error && (
@@ -239,9 +239,9 @@ export default function FeedbackPage({ onBack }: FeedbackPageProps) {
 
                     {/* Rating Section - NOW AT BOTTOM */}
                     <section className="space-y-8 pt-8 border-t border-slate-700/50">
-                        <div className="bg-slate-900/40 p-10 rounded-[2.5rem] border border-slate-700/30 text-center shadow-xl">
-                            <p className="text-slate-300 font-black mb-8 text-xl">تقييمك العام للتجربة بالنجوم؟</p>
-                            <div className="flex items-center justify-center gap-3" dir="ltr">
+                        <div className="bg-slate-900/40 p-6 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-700/30 text-center shadow-xl">
+                            <p className="text-slate-300 font-black mb-8 text-lg sm:text-xl">تقييمك العام للتجربة بالنجوم؟</p>
+                            <div className="flex items-center justify-center gap-1 sm:gap-3" dir="ltr">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <button
                                         key={star}
@@ -252,10 +252,10 @@ export default function FeedbackPage({ onBack }: FeedbackPageProps) {
                                         className="p-2 transition-all hover:scale-125 focus:outline-none"
                                     >
                                         <Star
-                                            className={`w-14 h-14 ${star <= (hoverRating || instructorRating)
+                                            className={`w-9 h-9 sm:w-14 sm:h-14 ${star <= (hoverRating || instructorRating)
                                                 ? "fill-yellow-400 text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]"
                                                 : "text-slate-700/50"
-                                                } transition-colors`}
+                                                } transition-all`}
                                         />
                                     </button>
                                 ))}

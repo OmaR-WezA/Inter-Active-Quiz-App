@@ -92,20 +92,36 @@ export default function TicTacToePage({ onBackHome, onWinAction }: TicTacToePage
 
         // Simulate thinking delay so it's not instant
         setTimeout(() => {
-            let bestScore = -Infinity
-            let move = -1
             const newBoard = [...board]
+            let move = -1
 
-            for (let i = 0; i < 9; i++) {
-                if (!newBoard[i]) {
-                    newBoard[i] = aiPlayer
-                    const score = minimax(newBoard, userPlayer!, 0)
-                    newBoard[i] = null
+            // Special case: if it's the first move and the board is empty, pick a random edge/corner/center to avoid being deterministic
+            const isBoardEmpty = newBoard.every(sq => sq === null)
+            if (isBoardEmpty) {
+                const openings = [0, 2, 4, 6, 8] // Corners and center
+                move = openings[Math.floor(Math.random() * openings.length)]
+            } else {
+                let bestScore = -Infinity
+                let moves: number[] = []
 
-                    if (score > bestScore) {
-                        bestScore = score
-                        move = i
+                for (let i = 0; i < 9; i++) {
+                    if (!newBoard[i]) {
+                        newBoard[i] = aiPlayer
+                        const score = minimax(newBoard, userPlayer!, 0)
+                        newBoard[i] = null
+
+                        if (score > bestScore) {
+                            bestScore = score
+                            moves = [i]
+                        } else if (score === bestScore) {
+                            moves.push(i)
+                        }
                     }
+                }
+
+                // Randomly pick one of the best moves
+                if (moves.length > 0) {
+                    move = moves[Math.floor(Math.random() * moves.length)]
                 }
             }
 
