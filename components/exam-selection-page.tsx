@@ -114,17 +114,18 @@ export default function ExamSelectionPage({ onSelect, onBack, onViewProfile }: P
             >
               {[
                 {
+                  id: 2,
+                  name: "الترم الثاني",
+                  description: "حل نماذج اختباريه ومراجعات شاملة علي الترم الثاني في جميع المواد",
+                  icon: <BookMarked className="w-12 h-12 text-cyan-400" />
+                },
+                {
                   id: 1,
                   name: "الترم الأول",
                   description: "مراجعة شاملة لأساسيات البرمجة بلغة Python",
                   icon: <BookMarked className="w-12 h-12 text-blue-400" />
-                },
-                {
-                  id: 2,
-                  name: "الترم الثاني",
-                  description: "مراجعة شاملة لمادة البرمجة بلغة C",
-                  icon: <BookMarked className="w-12 h-12 text-cyan-400" />
                 }
+
               ].map((term) => (
                 <motion.button
                   key={term.id}
