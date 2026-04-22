@@ -1,0 +1,75 @@
+-- Revision Questions for Term 2
+-- Microsoft Excel, Microsoft PowerPoint, Microsoft Word
+
+INSERT INTO questions (term, exam_name, type, question_text, options, correct_answer, marks) VALUES
+-- Microsoft Excel
+(2, 'Microsoft Excel', 'mcq', 'In Excel, a formula always starts with:', '["+", "@", "=", "#"]', 'C', 1),
+(2, 'Microsoft Excel', 'mcq', 'What is the cell address of the intersection of column C and row 10?', '["10C", "C10", "C-10", "Column C Row 10"]', 'B', 1),
+(2, 'Microsoft Excel', 'mcq', 'Which function is used to add a range of cells?', '["TOTAL()", "ADD()", "SUM()", "COUNT()"]', 'C', 1),
+(2, 'Microsoft Excel', 'mcq', 'To move to the next cell to the right, press:', '["Enter", "Tab", "Shift+Tab", "Home"]', 'B', 1),
+(2, 'Microsoft Excel', 'mcq', 'An Excel file is also known as a:', '["Worksheet", "Table", "Workbook", "Slide"]', 'C', 1),
+(2, 'Microsoft Excel', 'mcq', 'To find the average of a range of cells, use:', '["AVG()", "MEAN()", "AVERAGE()", "SUM()/COUNT"]', 'C', 1),
+(2, 'Microsoft Excel', 'mcq', 'Which feature allows you to arrange data in alphabetical order?', '["Filter", "Sort", "Merge", "Wrap Text"]', 'B', 1),
+(2, 'Microsoft Excel', 'mcq', 'To combine multiple cells into one, use:', '["Wrap Text", "Merge & Center", "Fill Handle", "AutoSum"]', 'B', 1),
+(2, 'Microsoft Excel', 'mcq', 'The symbol used for multiplication in Excel is:', '["x", "*", ".", "^"]', 'B', 1),
+(2, 'Microsoft Excel', 'mcq', 'Which function returns the highest value in a range?', '["HIGH()", "TOP()", "MAX()", "LARGE()"]', 'C', 1),
+(2, 'Microsoft Excel', 'mcq', 'To insert a chart, which tab should you use?', '["Data", "Formulas", "Insert", "View"]', 'C', 1),
+(2, 'Microsoft Excel', 'mcq', 'What happens if you double-click on a sheet tab at the bottom?', '["Deletes the sheet", "Renames the sheet", "Hides the sheet", "Saves the workbook"]', 'B', 1),
+(2, 'Microsoft Excel', 'mcq', 'The ''Fill Handle'' (small green square at cell corner) is used to:', '["Delete cell content", "Copy formulas or patterns", "Bold text", "Change cell color"]', 'B', 1),
+(2, 'Microsoft Excel', 'mcq', 'To select non-adjacent cells, hold down which key?', '["Shift", "Alt", "Ctrl", "Tab"]', 'C', 1),
+(2, 'Microsoft Excel', 'mcq', 'Which shortcut goes to the beginning of the worksheet (A1)?', '["Ctrl+Home", "Ctrl+Up", "Home", "Shift+Home"]', 'A', 1),
+(2, 'Microsoft Excel', 'mcq', 'To freeze rows or columns so they stay visible, use:', '["Split", "Freeze Panes", "Lock Cells", "Hide"]', 'B', 1),
+(2, 'Microsoft Excel', 'mcq', 'The horizontal scroll bar is located at the:', '["Top", "Bottom", "Right", "Left"]', 'B', 1),
+(2, 'Microsoft Excel', 'mcq', 'Conditional Formatting is found in which tab?', '["Data", "Home", "Insert", "Review"]', 'B', 1),
+(2, 'Microsoft Excel', 'mcq', 'To display only rows that meet certain criteria, use:', '["Sort", "Filter", "Format Painter", "Goal Seek"]', 'B', 1),
+(2, 'Microsoft Excel', 'mcq', 'What is the result of =10+5*2 in Excel?', '["30", "20", "25", "15"]', 'B', 1),
+
+-- Microsoft PowerPoint
+(2, 'Microsoft PowerPoint', 'mcq', 'The file extension for a modern PowerPoint presentation is:', '[" .pptx", ".xlsx", ".docx", ".txt"]', 'A', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'Which view is best for reordering slides?', '["Normal", "Slide Sorter", "Reading View", "Outline View"]', 'B', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'To start a slide show from the very first slide, press:', '["F1", "F2", "F5", "Shift+F5"]', 'C', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'To start a slide show from the current slide, press:', '["F5", "Shift+F5", "Ctrl+F5", "Alt+F5"]', 'B', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'Animations are applied to:', '["Slides", "Elements inside a slide", "The whole presentation", "Slide transitions"]', 'B', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'Transitions are effects that occur when:', '["Text moves", "Moving from one slide to another", "Closing the program", "Inserting a picture"]', 'B', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'Which tab allows you to add a new slide?', '["Insert", "Home", "Design", "Both A and B are correct"]', 'D', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'The ''Notes'' pane is used by:', '["The audience", "The presenter", "Both", "Neither"]', 'B', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'To exit a slide show, press:', '["Enter", "Esc", "Space", "Ctrl+X"]', 'B', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'Which tab is used to change the background theme of slides?', '["Transitions", "Design", "Animations", "View"]', 'B', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'A PowerPoint presentation is a collection of:', '["Sheets", "Pages", "Slides", "Documents"]', 'C', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'To duplicate a slide, the shortcut is:', '["Ctrl+D", "Ctrl+N", "Ctrl+M", "Ctrl+C"]', 'A', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'Where can you find the ''Slide Sorter'' view?', '["Home Tab", "View Tab", "Status Bar", "Both B and C"]', 'D', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'Which of the following is NOT an animation type?', '["Entrance", "Emphasis", "Exit", "Translation"]', 'D', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'To hide a slide from the presentation, you:', '["Delete it", "Right-click and choose ''Hide Slide''", "Move it to the end", "Change its color"]', 'B', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'Quick Access Toolbar contains commands like:', '["Save, Undo, Redo", "Transitions", "File properties", "Table tools"]', 'A', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'To group multiple objects on a slide, press:', '["Ctrl+G", "Ctrl+U", "Ctrl+K", "Ctrl+L"]', 'A', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'SmartArt is used to:', '["Edit photos", "Create visual diagrams", "Record audio", "Write code"]', 'B', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'To insert a video into a slide, go to:', '["Transitions", "Insert", "Design", "Animations"]', 'B', 1),
+(2, 'Microsoft PowerPoint', 'mcq', 'Which option allows you to print multiple slides on one page?', '["Full Page Slides", "Handouts", "Notes Pages", "Outline View"]', 'B', 1),
+
+-- Microsoft Word
+(2, 'Microsoft Word', 'mcq', 'What is the shortcut to save a document?', '["Ctrl+C", "Ctrl+S", "Ctrl+V", "Ctrl+P"]', 'B', 1),
+(2, 'Microsoft Word', 'mcq', 'Which tab is used to insert a Table in Word?', '["Home", "Layout", "Insert", "Design"]', 'C', 1),
+(2, 'Microsoft Word', 'mcq', 'To check spelling and grammar errors, you press:', '["F1", "F5", "F7", "F12"]', 'C', 1),
+(2, 'Microsoft Word', 'mcq', 'The feature ''Mail Merge'' is found in which tab?', '["Home", "Mailings", "View", "Review"]', 'B', 1),
+(2, 'Microsoft Word', 'mcq', 'To undo the last action, use:', '["Ctrl+Y", "Ctrl+Z", "Ctrl+X", "Ctrl+A"]', 'B', 1),
+(2, 'Microsoft Word', 'mcq', 'Which view displays the document as it will appear when printed?', '["Web Layout", "Print Layout", "Draft", "Outline"]', 'B', 1),
+(2, 'Microsoft Word', 'mcq', 'To change the orientation of a page, you go to:', '["Home", "Insert", "Layout", "View"]', 'C', 1),
+(2, 'Microsoft Word', 'mcq', 'What is the shortcut for Bold text?', '["Ctrl+I", "Ctrl+U", "Ctrl+B", "Ctrl+N"]', 'C', 1),
+(2, 'Microsoft Word', 'mcq', 'Header and Footer are found in which tab?', '["Insert", "Home", "Design", "Review"]', 'A', 1),
+(2, 'Microsoft Word', 'mcq', 'To search for a specific word in the document, press:', '["Ctrl+H", "Ctrl+F", "Ctrl+G", "Ctrl+K"]', 'B', 1),
+(2, 'Microsoft Word', 'mcq', 'To replace a word with another, use:', '["Ctrl+F", "Ctrl+H", "Ctrl+R", "Ctrl+L"]', 'B', 1),
+(2, 'Microsoft Word', 'mcq', 'Which of the following is NOT a font style?', '["Bold", "Italic", "Underline", "Superscript"]', 'D', 1),
+(2, 'Microsoft Word', 'mcq', 'The keyboard shortcut to print a document is:', '["Ctrl+P", "Ctrl+S", "Ctrl+I", "Ctrl+O"]', 'A', 1),
+(2, 'Microsoft Word', 'mcq', 'What does Ctrl+I do?', '["Insert image", "Indent paragraph", "Italicize text", "Increase font"]', 'C', 1),
+(2, 'Microsoft Word', 'mcq', 'Which feature is used to record edits made by others?', '["Mail Merge", "Track Changes", "Macros", "Watermark"]', 'B', 1),
+(2, 'Microsoft Word', 'mcq', 'To center align a paragraph, the shortcut is:', '["Ctrl+L", "Ctrl+R", "Ctrl+E", "Ctrl+J"]', 'C', 1),
+(2, 'Microsoft Word', 'mcq', 'Subscript (x₂) and Superscript (x²) are in which group?', '["Paragraph", "Font", "Styles", "Editing"]', 'B', 1),
+(2, 'Microsoft Word', 'mcq', 'To create a new blank document, the shortcut is:', '["Ctrl+M", "Ctrl+B", "Ctrl+N", "Ctrl+D"]', 'C', 1),
+(2, 'Microsoft Word', 'mcq', 'Margins can be adjusted from which tab?', '["Home", "Layout", "View", "References"]', 'B', 1),
+(2, 'Microsoft Word', 'mcq', 'The default extension for Word 2016 and later is:', '[" .doc", ".docx", ".dot", ".txt"]', 'B', 1);
+
+-- Revision PDFs for Term 2
+INSERT INTO pdfs (name, url, term) VALUES 
+('Microsoft Excel Guide', '/api/pdf-download?fileId=excel_guide_2026', 2),
+('Microsoft PowerPoint Guide', '/api/pdf-download?fileId=pp_guide_2026', 2),
+('Microsoft Word Guide', '/api/pdf-download?fileId=word_guide_2026', 2);
