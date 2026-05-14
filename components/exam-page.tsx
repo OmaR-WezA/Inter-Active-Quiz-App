@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ChevronRight, ChevronLeft, Send, LogOut, Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
+import { APP_CONFIG } from "@/lib/config"
 
 interface ExamPageProps {
   session: {
@@ -105,9 +106,16 @@ export default function ExamPage({ session, onComplete, onExit, onStateChange }:
 
     questions.forEach((q) => {
       const userAnswer = answers[q.id]
-      if (q.type !== "mcq") return
-      totalPossible += q.marks
-      if (isAnswerCorrect(q, userAnswer || "")) scoredScore += q.marks
+      // Include MCQ 
+      if (q.type === "mcq") {
+        totalPossible += q.marks || 1
+        if (isAnswerCorrect(q, userAnswer || "")) scoredScore += q.marks || 1
+      }
+      // Include CodeOutput only if configured
+      else if (q.type === "codeoutput" && APP_CONFIG.GRADE_PRACTICAL) {
+        totalPossible += q.marks || 1
+        if (isAnswerCorrect(q, userAnswer || "")) scoredScore += q.marks || 1
+      }
     })
 
     const payload = {
@@ -321,7 +329,7 @@ export default function ExamPage({ session, onComplete, onExit, onStateChange }:
                   <div className="bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full text-sm font-medium">
                     {question.section || question.type.toUpperCase()}
                   </div>
-                  {question.type === "mcq" ? (
+                  {(question.type === "mcq" || (question.type === "codeoutput" && APP_CONFIG.GRADE_PRACTICAL)) ? (
                     <div className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter flex items-center">
                       Graded / محسوب
                     </div>

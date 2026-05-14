@@ -110,11 +110,14 @@ export default function ProfilePage({ username, onBackHome, onResume, onViewResu
   const completedExams = exams.filter(e => e.status === 'completed')
 
   const avgScore = completedExams.length > 0
-    ? (completedExams.reduce((sum, e) => sum + (e.score / e.total_possible), 0) / completedExams.length * 100).toFixed(1)
+    ? (completedExams.reduce((sum, e) => {
+      const p = e.total_possible > 0 ? (e.score / e.total_possible) : 0
+      return sum + p
+    }, 0) / completedExams.length * 100).toFixed(1)
     : 0
 
   const bestScore = completedExams.length > 0
-    ? Math.max(...completedExams.map(e => (e.score / e.total_possible) * 100)).toFixed(0)
+    ? Math.max(...completedExams.map(e => e.total_possible > 0 ? (e.score / e.total_possible) * 100 : 0)).toFixed(0)
     : 0
 
   return (
@@ -167,7 +170,7 @@ export default function ProfilePage({ username, onBackHome, onResume, onViewResu
           {exams.length > 0 ? (
             <div className="space-y-4">
               {exams.map((exam, idx) => {
-                const perc = (exam.score / exam.total_possible) * 100
+                const perc = exam.total_possible > 0 ? (exam.score / exam.total_possible) * 100 : 0
                 return (
                   <div
                     key={idx}

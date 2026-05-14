@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Home, User, Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { APP_CONFIG } from "@/lib/config"
 
 interface ResultsPageProps {
   session: {
@@ -37,7 +38,7 @@ export default function ResultsPage({ session, resultId, onViewProfile, onBackHo
       if (resultId) {
         query = query.eq('id', resultId)
       } else {
-        query = query.eq('student_id', studentId).order('completed_at', { ascending: false }).limit(1)
+        query = query.eq('student_id', studentId).eq('status', 'completed').order('completed_at', { ascending: false }).limit(1)
       }
 
       const { data: resultData, error: resultError } = await query.single()
@@ -59,6 +60,28 @@ export default function ResultsPage({ session, resultId, onViewProfile, onBackHo
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Lazy update: Correct stale database records (0/0 or missing practical marks)
+  useEffect(() => {
+    if (!loading && result && questions.length > 0) {
+      const stats = getDetailedBreakdown()
+      const newScore = stats.mcq.correct + stats.practical.correct
+      const newTotal = stats.mcq.total + stats.practical.total
+
+      if (result.total_possible === 0 || (result.score === 0 && newScore > 0)) {
+        updateStaleResult(newScore, newTotal)
+      }
+    }
+  }, [loading, result, questions])
+
+  const updateStaleResult = async (score: number, total: number) => {
+    try {
+      await supabase.from('exam_results').update({ score, total_possible: total }).eq('id', result.id)
+      setResult({ ...result, score, total_possible: total })
+    } catch (err) {
+      console.error("Failed to lazy-update result:", err)
     }
   }
 
@@ -91,37 +114,51 @@ export default function ResultsPage({ session, resultId, onViewProfile, onBackHo
     return Object.entries(sections).map(([name, stat]) => ({
       name,
       ...stat,
-      percentage: (stat.correct / stat.total) * 100
+      percentage: stat.total > 0 ? (stat.correct / stat.total) * 100 : 0
     }))
   }
 
   const getDetailedBreakdown = () => {
-    if (!result || !questions.length) return { mcq: { correct: 0, total: 0 }, other: { correct: 0, total: 0 } }
+    if (!result || !questions.length) return { mcq: { correct: 0, total: 0 }, practical: { correct: 0, total: 0 }, theory: { correct: 0, total: 0 } }
 
     let mcqCorrect = 0, mcqTotal = 0
-    let otherCorrect = 0, otherTotal = 0
+    let pracCorrect = 0, pracTotal = 0
+    let theoryCorrect = 0, theoryTotal = 0
 
     questions.forEach(q => {
-      const userAnswer = result.answers[q.id]
-      const isCorrect = userAnswer && (
-        q.type === 'mcq'
-          ? userAnswer.toUpperCase() === q.correct_answer.toUpperCase()
-          : userAnswer.toLowerCase().trim() === q.correct_answer.toLowerCase().trim()
-      )
+      const userAnswer = result.answers[q.id] || ""
+      const isCorrect = isAnswerCorrect(q, userAnswer)
 
       if (q.type === 'mcq') {
         mcqTotal++
         if (isCorrect) mcqCorrect++
+      } else if (q.type === 'codeoutput') {
+        if (APP_CONFIG.GRADE_PRACTICAL) {
+          pracTotal++
+          if (isCorrect) pracCorrect++
+        } else {
+          theoryTotal++
+          if (isCorrect) theoryCorrect++
+        }
       } else {
-        otherTotal++
-        if (isCorrect) otherCorrect++
+        theoryTotal++
+        if (isCorrect) theoryCorrect++
       }
     })
 
     return {
       mcq: { correct: mcqCorrect, total: mcqTotal },
-      other: { correct: otherCorrect, total: otherTotal }
+      practical: { correct: pracCorrect, total: pracTotal },
+      theory: { correct: theoryCorrect, total: theoryTotal }
     }
+  }
+
+  const isAnswerCorrect = (q: any, ans: string) => {
+    if (!ans) return false
+    if (q.type === 'mcq') {
+      return ans.toUpperCase() === q.correct_answer.toUpperCase()
+    }
+    return ans.toLowerCase().trim() === q.correct_answer.toLowerCase().trim()
   }
 
   const getGrade = (percentage: number) => {
@@ -152,7 +189,7 @@ export default function ResultsPage({ session, resultId, onViewProfile, onBackHo
     )
   }
 
-  const percentage = (result.score / result.total_possible) * 100
+  const percentage = result.total_possible > 0 ? (result.score / result.total_possible) * 100 : 0
   const gradeInfo = getGrade(percentage)
   const sectionStats = getStatsBySection()
   const detailedStats = getDetailedBreakdown()
@@ -187,39 +224,57 @@ export default function ResultsPage({ session, resultId, onViewProfile, onBackHo
           <p className="text-slate-400 font-medium mb-10">الترم {result.term} - مراجعة شاملة</p>
 
           {/* Key Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-            <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-700/50 shadow-xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+            <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-700/50 shadow-xl">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-slate-400 text-xs font-bold uppercase tracking-widest text-right">الأسئلة الاختيارية</span>
-                <span className="bg-cyan-500/10 text-cyan-400 text-[10px] px-2 py-0.5 rounded-full font-bold">GRADED</span>
+                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest text-right">درجات MCQ</span>
+                <span className="bg-green-500/10 text-green-400 text-[8px] px-2 py-0.5 rounded-full font-bold">GRADED</span>
               </div>
-              <p className="text-4xl font-black text-cyan-400 text-right">{detailedStats.mcq.correct} <span className="text-slate-600 text-xl font-light">/ {detailedStats.mcq.total}</span></p>
+              <p className="text-3xl font-black text-white text-right">{detailedStats.mcq.correct} <span className="text-slate-600 text-lg font-light">/ {detailedStats.mcq.total}</span></p>
             </div>
-            <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-700/50 shadow-xl">
+
+            <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-700/50 shadow-xl">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-slate-400 text-xs font-bold uppercase tracking-widest text-right">الأسئلة المقالية</span>
-                <span className="bg-amber-500/10 text-amber-400 text-[10px] px-2 py-0.5 rounded-full font-bold">REVIEW</span>
+                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest text-right">درجات العملي</span>
+                <span className={`${APP_CONFIG.GRADE_PRACTICAL ? 'bg-cyan-500/10 text-cyan-400' : 'bg-slate-500/10 text-slate-400'} text-[8px] px-2 py-0.5 rounded-full font-bold`}>{APP_CONFIG.GRADE_PRACTICAL ? 'GRADED' : 'REVIEW'}</span>
               </div>
-              <p className="text-4xl font-black text-amber-400 text-right">{detailedStats.other.correct} <span className="text-slate-600 text-xl font-light">/ {detailedStats.other.total}</span></p>
+              <p className={`text-3xl font-black ${APP_CONFIG.GRADE_PRACTICAL ? 'text-cyan-400' : 'text-slate-400'} text-right`}>{detailedStats.practical.correct} <span className="text-slate-600 text-lg font-light">/ {detailedStats.practical.total}</span></p>
+            </div>
+
+            <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-700/50 shadow-xl">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest text-right">درجات النظري</span>
+                <span className="bg-amber-500/10 text-amber-400 text-[8px] px-2 py-0.5 rounded-full font-bold">REVIEW</span>
+              </div>
+              <p className="text-3xl font-black text-amber-400 text-right">{detailedStats.theory.correct} <span className="text-slate-600 text-lg font-light">/ {detailedStats.theory.total}</span></p>
             </div>
           </div>
 
           {/* Main Score Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className={`${gradeInfo.bg} border border-slate-600 rounded-2xl p-8 mb-8 relative group`}
-          >
-            <div className="text-6xl font-black mb-2 tracking-tighter">
-              <span className={gradeInfo.color}>{result.score}</span>
-              <span className="text-slate-500 text-3xl font-light">/{result.total_possible}</span>
-            </div>
-            <p className="text-3xl font-bold mb-2">
-              <span className={gradeInfo.color}>{percentage.toFixed(1)}%</span>
-            </p>
-            <p className={`text-xl font-bold uppercase tracking-widest ${gradeInfo.color}`}>{gradeInfo.grade}</p>
-          </motion.div>
+          {(() => {
+            const displayScore = detailedStats.mcq.correct + detailedStats.practical.correct
+            const displayTotal = detailedStats.mcq.total + detailedStats.practical.total
+            const displayPerc = displayTotal > 0 ? (displayScore / displayTotal) * 100 : 0
+            const displayGrade = getGrade(displayPerc)
+
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className={`${displayGrade.bg} border border-slate-600 rounded-2xl p-8 mb-8 relative group`}
+              >
+                <div className="text-6xl font-black mb-2 tracking-tighter">
+                  <span className={displayGrade.color}>{displayScore}</span>
+                  <span className="text-slate-500 text-3xl font-light">/{displayTotal}</span>
+                </div>
+                <p className="text-3xl font-bold mb-2">
+                  <span className={displayGrade.color}>{displayPerc.toFixed(1)}%</span>
+                </p>
+                <p className={`text-xl font-bold uppercase tracking-widest ${displayGrade.color}`}>{displayGrade.grade}</p>
+              </motion.div>
+            )
+          })()}
 
           {/* Topic Performance List */}
           <div className="text-right mb-10">
