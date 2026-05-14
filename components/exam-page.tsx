@@ -192,6 +192,20 @@ export default function ExamPage({ session, onComplete, onExit, onStateChange }:
 
   const { instruction, code } = splitQuestion(question.question_text)
 
+  const highlightC = (text: string) => {
+    // Standard professional dark theme highlighting
+    const components = text.split(/(\b(?:int|char|float|double|void|return|if|else|switch|case|default|for|while|do|break|continue|include|define|const|short|long|static|unsigned|signed|struct|union|enum|sizeof|typedef)\b|#include\s+<.*?>|#define\s+.*|".*?"|''.*?''|\/\/.*|\/\*[\s\S]*?\*\/|\b\d+\b)/g);
+
+    return components.map((part, i) => {
+      if (/^(\/\/.*|\/\*[\s\S]*?\*\/)$/.test(part)) return <span key={i} className="text-green-500/80 italic">{part}</span>;
+      if (/^(\b(?:int|char|float|double|void|return|if|else|switch|case|default|for|while|do|break|continue|include|define|const|short|long|static|unsigned|signed|struct|union|enum|sizeof|typedef)\b)$/.test(part)) return <span key={i} className="text-blue-400">{part}</span>;
+      if (/^(".*?"|''.*?'')$/.test(part)) return <span key={i} className="text-orange-300">{part}</span>;
+      if (/^(#include\s+<.*?>|#define\s+.*)$/.test(part)) return <span key={i} className="text-purple-400">{part}</span>;
+      if (/^(\b\d+\b)$/.test(part)) return <span key={i} className="text-amber-300">{part}</span>;
+      return part;
+    });
+  };
+
   const handleAnswer = (answer: string) => {
     if (session.correctionMode === "immediate" && isCurrentQuestionAnswered) {
       return
@@ -327,26 +341,40 @@ export default function ExamPage({ session, onComplete, onExit, onStateChange }:
                 </div>
               )}
 
-              {/* Premium Code/Question Box */}
-              <div className="bg-slate-900 border border-slate-700/50 rounded-xl overflow-hidden shadow-2xl shadow-blue-500/5" dir="ltr">
+              {/* Premium Code/Question Box (VS Code Style) */}
+              <div className="bg-[#1e1e1e] border border-slate-700/50 rounded-xl overflow-hidden shadow-2xl shadow-blue-500/5" dir="ltr">
                 {/* Terminal Header */}
-                <div className="bg-slate-800/50 px-4 py-2 border-b border-slate-700/50 flex items-center justify-between">
+                <div className="bg-[#252526] px-4 py-2 border-b border-[#333] flex items-center justify-between">
                   <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-500/40" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-500/40" />
-                    <div className="w-3 h-3 rounded-full bg-green-500/40" />
+                    <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+                    <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+                    <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
                   </div>
-                  <div className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
-                    {question.type === 'theory' ? 'Logic Window' : 'Code Editor'}
+                  <div className="text-[10px] text-slate-400 font-mono uppercase tracking-widest flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                    {question.type === 'theory' ? 'Logic.c — Visual Studio Code' : 'main.c — Visual Studio Code'}
                   </div>
                 </div>
 
                 {/* Code Content */}
-                <div className="p-6 overflow-x-auto text-left">
-                  <pre className="font-mono text-[15px] leading-relaxed whitespace-pre-wrap break-words">
-                    <span className="text-cyan-400/80 mr-3 border-r border-slate-700 pr-3 opacity-30 select-none">1</span>
-                    <span className="text-slate-200">{code}</span>
-                  </pre>
+                <div className="p-4 font-mono text-[14px] md:text-[15px] leading-relaxed flex bg-[#1e1e1e] text-left items-start" dir="ltr">
+                  {/* Line Numbers */}
+                  <div className="pr-4 text-right text-slate-600 select-none border-r border-[#333] mr-4 flex flex-col min-w-[30px] shrink-0">
+                    {code.split(/\n|\\n/).map((_, i) => (
+                      <div key={i} className="h-[21px] md:h-[22.5px] leading-relaxed">
+                        {i + 1}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Highlighted Code */}
+                  <div className="flex-1 overflow-x-auto whitespace-pre scrolling-touch pb-2 text-left">
+                    {code.split(/\n|\\n/).map((line, i) => (
+                      <div key={i} className="h-[21px] md:h-[22.5px] leading-relaxed text-slate-200 text-left">
+                        {highlightC(line.replace(/\\n/g, '\n'))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

@@ -16,12 +16,15 @@ export default function ExamSelectionPage({ onSelect, onBack, onViewProfile }: P
   const [selectedTerm, setSelectedTerm] = React.useState<number | null>(null)
   const [availableExams, setAvailableExams] = React.useState<string[]>([])
   const [selectedExam, setSelectedExam] = React.useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null)
   const [correctionMode, setCorrectionMode] = React.useState<"immediate" | "final" | null>(null)
   const [loading, setLoading] = React.useState(false)
 
   React.useEffect(() => {
     if (selectedTerm !== null) {
       fetchExams(selectedTerm)
+      setSelectedCategory(null)
+      setSelectedExam(null)
     }
   }, [selectedTerm])
 
@@ -40,13 +43,7 @@ export default function ExamSelectionPage({ onSelect, onBack, onViewProfile }: P
       setAvailableExams(names)
     } catch (err: any) {
       toast.error("فشل تحميل قائمة الاختبارات")
-      console.error("Database Fetch Error Details:", {
-        message: err.message,
-        code: err.code,
-        details: err.details,
-        hint: err.hint,
-        error: err
-      })
+      console.error("Database Fetch Error Details:", err)
     } finally {
       setLoading(false)
     }
@@ -60,6 +57,18 @@ export default function ExamSelectionPage({ onSelect, onBack, onViewProfile }: P
       return () => clearTimeout(timer)
     }
   }, [selectedTerm, selectedExam, correctionMode, onSelect])
+
+  // More robust filtering for Arabic characters (haa/taa marbouta)
+  const isPractical = (name: string) =>
+    name.toLowerCase().includes('مراجعه العملي') ||
+    name.toLowerCase().includes('مراجعة العملي')
+
+  const practicalExams = availableExams.filter(e => isPractical(e))
+  const otherExams = availableExams.filter(e => !isPractical(e))
+
+  const filteredExams = selectedTerm === 2
+    ? (selectedCategory === 'practical' ? practicalExams : (selectedCategory === 'final' ? [] : (selectedCategory === null ? otherExams : availableExams)))
+    : availableExams
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
@@ -85,6 +94,7 @@ export default function ExamSelectionPage({ onSelect, onBack, onViewProfile }: P
             <motion.button
               onClick={() => {
                 if (selectedExam !== null) setSelectedExam(null)
+                else if (selectedCategory !== null) setSelectedCategory(null)
                 else setSelectedTerm(null)
               }}
               whileHover={{ x: -4 }}
@@ -104,7 +114,7 @@ export default function ExamSelectionPage({ onSelect, onBack, onViewProfile }: P
 
         <AnimatePresence mode="wait">
           {selectedTerm === null ? (
-            // Term Selection
+            // Term Selection (Same as before)
             <motion.div
               key="term-selection"
               initial={{ opacity: 0, x: 20 }}
@@ -147,7 +157,7 @@ export default function ExamSelectionPage({ onSelect, onBack, onViewProfile }: P
               ))}
             </motion.div>
           ) : selectedExam === null ? (
-            // Exam Selection
+            // Exam/Category Selection
             <motion.div
               key="exam-selection"
               initial={{ opacity: 0, x: 20 }}
@@ -156,8 +166,15 @@ export default function ExamSelectionPage({ onSelect, onBack, onViewProfile }: P
               className="max-w-3xl mx-auto"
             >
               <div className="flex items-center justify-between mb-8 flex-row-reverse">
-                <h2 className="text-2xl font-bold text-white">اختر الاختبار المتاح</h2>
-                <button onClick={() => setSelectedTerm(null)} className="text-slate-400 hover:text-white transition-colors">تغيير الترم</button>
+                <h2 className="text-2xl font-bold text-white">
+                  {selectedCategory === 'practical' ? 'مراجعات العملي' : 'اختر الاختبار المتاح'}
+                </h2>
+                <button
+                  onClick={() => selectedCategory ? setSelectedCategory(null) : setSelectedTerm(null)}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  {selectedCategory ? 'تغيير القسم' : 'تغيير الترم'}
+                </button>
               </div>
 
               {loading ? (
@@ -167,7 +184,58 @@ export default function ExamSelectionPage({ onSelect, onBack, onViewProfile }: P
                 </div>
               ) : (
                 <div className="grid gap-4">
-                  {availableExams.map((exam) => (
+                  {/* Category Cards for Term 2 */}
+                  {selectedTerm === 2 && selectedCategory === null && (
+                    <>
+                      {/* Practical Card */}
+                      <motion.button
+                        onClick={() => setSelectedCategory('practical')}
+                        whileHover={{ scale: 1.02, x: -4 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full bg-gradient-to-r from-slate-800/60 to-slate-900/60 border-2 border-cyan-500/30 hover:border-cyan-400 rounded-xl p-6 text-right transition-all flex items-center justify-between group shadow-xl shadow-cyan-500/5"
+                      >
+                        <ChevronRight className="w-5 h-5 text-cyan-400 group-hover:translate-x-[-4px] transition-transform" />
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <h3 className="text-xl font-bold text-white group-hover:text-cyan-400 transition-colors">مراجعات العملي</h3>
+                            <p className="text-sm text-slate-400">جميع مراجعات البرمجة العملي لـ 80 سؤال</p>
+                          </div>
+                          <div className="p-3 bg-cyan-500/20 rounded-lg">
+                            <BookMarked className="w-6 h-6 text-cyan-400" />
+                          </div>
+                        </div>
+                      </motion.button>
+
+                      {/* Final Card (Empty) */}
+                      <motion.button
+                        onClick={() => setSelectedCategory('final')}
+                        whileHover={{ scale: 1.02, x: -4 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full bg-slate-800/20 border border-slate-700/50 hover:border-blue-400/50 rounded-xl p-6 text-right transition-all flex items-center justify-between group opacity-70 hover:opacity-100"
+                      >
+                        <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-blue-400 transition-colors" />
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">المراجعات النهائيه</h3>
+                            <p className="text-sm text-slate-500">قريباً.. المراجعة النهائية الشاملة</p>
+                          </div>
+                          <div className="p-3 bg-blue-500/10 rounded-lg">
+                            <CheckCircle className="w-6 h-6 text-blue-400/50" />
+                          </div>
+                        </div>
+                      </motion.button>
+
+                      <div className="h-4" />
+                      <div className="flex items-center gap-4 flex-row-reverse mb-2 px-2">
+                        <div className="h-px bg-slate-700 flex-1" />
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">اختبارات الوحدات</span>
+                        <div className="h-px bg-slate-700 flex-1" />
+                      </div>
+                    </>
+                  )}
+
+                  {/* List of Exams */}
+                  {filteredExams.map((exam) => (
                     <motion.button
                       key={exam}
                       onClick={() => setSelectedExam(exam)}
@@ -187,7 +255,15 @@ export default function ExamSelectionPage({ onSelect, onBack, onViewProfile }: P
                       </div>
                     </motion.button>
                   ))}
-                  {availableExams.length === 0 && (
+
+                  {filteredExams.length === 0 && selectedCategory === 'final' && (
+                    <div className="text-center py-12 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">
+                      <p className="text-slate-500 text-lg">لم يتم طرح المراجعات النهائية بعد..</p>
+                      <p className="text-sm text-slate-600 mt-2">انتظرونا قريباً للحصول على أقوى مراجعة نهائية</p>
+                    </div>
+                  )}
+
+                  {filteredExams.length === 0 && selectedCategory !== 'final' && (
                     <div className="text-center py-12 bg-slate-800/20 rounded-2xl border border-dashed border-slate-700">
                       <p className="text-slate-500">لا توجد اختبارات متاحة لهذا الترم حالياً</p>
                     </div>
