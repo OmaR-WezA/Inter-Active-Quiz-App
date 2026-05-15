@@ -86,14 +86,11 @@ export default function AdminPage() {
 
   useEffect(() => { loadData() }, [loadData])
 
-  // --- Dual Ranking Calculation ---
   const rankedStudents = useMemo(() => {
-    // Calculate Rank By Points
     const byPoints = [...students].sort((a, b) =>
       (b.perfectExamsCount - a.perfectExamsCount) || (b.totalScore - a.totalScore) || (b.averagePercentage - a.averagePercentage) || a.full_name.localeCompare(b.full_name)
     )
 
-    // Calculate Rank By Percentage
     const byPercentage = [...students].sort((a, b) =>
       (b.averagePercentage - a.averagePercentage) || (b.totalScore - a.totalScore) || (b.perfectExamsCount - a.perfectExamsCount) || a.full_name.localeCompare(b.full_name)
     )
@@ -305,18 +302,51 @@ export default function AdminPage() {
           </TabsContent>
 
           <TabsContent value="feedback">
-            <Card className="bg-white border-none shadow-sm overflow-hidden"><table className="w-full text-right" dir="rtl"><thead className="bg-slate-50 font-bold text-xs border-b"><tr><th className="p-4">الطالب</th><th className="p-4">المميزات</th><th className="p-4">السلبيات</th><th className="p-4 text-center">التقييم</th><th className="p-4 text-left">إجراء</th></tr></thead><tbody className="divide-y text-sm">
-              {feedbacks.length === 0 ? <tr><td colSpan={5} className="py-20 text-center text-slate-400">لا توجد تعليقات حالياً</td></tr> :
-                feedbacks.map(f => (
-                  <tr key={f.id} className="hover:bg-slate-50">
-                    <td className="p-4"><div className="font-bold">{f.student_name}</div><div className="text-[10px] text-slate-400">{f.phone_number}</div></td>
-                    <td className="p-4 text-xs text-emerald-600 max-w-xs">{f.good_things || '-'}</td>
-                    <td className="p-4 text-xs text-red-600 max-w-xs">{f.needs_improvement || '-'}</td>
-                    <td className="p-4 text-center"><div className="flex items-center justify-center gap-0.5 text-yellow-400">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className={`w-3 h-3 ${i < f.instructor_rating ? 'fill-current' : 'text-slate-200'}`} />)}</div></td>
-                    <td className="p-4 text-left"><Button onClick={() => handleDelete('/api/admin/feedback?id=', f.id)} variant="ghost" className="text-red-500"><Trash2 className="w-4 h-4" /></Button></td>
-                  </tr>
-                ))}
-            </tbody></table></Card>
+            <Card className="bg-white border-none shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-right min-w-[800px]" dir="rtl">
+                  <thead className="bg-slate-50 font-bold text-xs border-b">
+                    <tr>
+                      <th className="p-4">الطالب</th>
+                      <th className="p-4 text-center">التاريخ</th>
+                      <th className="p-4">المميزات</th>
+                      <th className="p-4">السلبيات</th>
+                      <th className="p-4 text-center">التقييم</th>
+                      <th className="p-4 text-left">إجراء</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y text-sm">
+                    {feedbacks.length === 0 ? <tr><td colSpan={6} className="py-20 text-center text-slate-400">لا توجد تعليقات حالياً</td></tr> :
+                      feedbacks.map(f => (
+                        <tr key={f.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="p-4">
+                            <div className="font-bold text-slate-900">{f.student_name}</div>
+                            <div className="text-[10px] text-slate-400">{f.phone_number}</div>
+                          </td>
+                          <td className="p-4 text-center text-[10px] text-slate-400 whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(f.created_at || Date.now()).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' })}
+                            </div>
+                          </td>
+                          <td className="p-4 text-xs text-emerald-600 max-w-xs">{f.good_things || '-'}</td>
+                          <td className="p-4 text-xs text-red-600 max-w-xs">{f.needs_improvement || '-'}</td>
+                          <td className="p-4 text-center">
+                            <div className="flex items-center justify-center gap-0.5 text-yellow-400">
+                              {Array.from({ length: 5 }).map((_, i) => <Star key={i} className={`w-3 h-3 ${i < f.instructor_rating ? 'fill-current' : 'text-slate-200'}`} />)}
+                            </div>
+                          </td>
+                          <td className="p-4 text-left">
+                            <Button onClick={() => handleDelete('/api/admin/feedback?id=', f.id)} variant="ghost" className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-2">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
