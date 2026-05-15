@@ -270,7 +270,6 @@ INSERT INTO questions (term, exam_name, type, question_text, options, correct_an
 (2, 'Comprehensive Revision', 'codeoutput', 'What is output of: int x=10; {int x=20; printf("%d ", x);} printf("%d", x);', NULL, '20 10', 2),
 (2, 'Comprehensive Revision', 'codeoutput', 'What is output: int i=1; while(i++ < 3) printf("%d ", i);', NULL, '2 3', 2),
 (2, 'Comprehensive Revision', 'codeoutput', 'What is output: int a[]={1,2,3}; printf("%d", *(a+1));', NULL, '2', 2),
-(2, 'Comprehensive Revision', 'codeoutput', 'What is output: int x=5; printf("%d", x << 1);', NULL, '10', 2),
 (2, 'Comprehensive Revision', 'codeoutput', 'What is output: printf("%d", 10 > 5 && 5 < 2);', NULL, '0', 2);
 
 -- 8. Create Feedback table (Portfolio Testimonials)

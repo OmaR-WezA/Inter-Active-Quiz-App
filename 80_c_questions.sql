@@ -506,16 +506,6 @@ int main() {
 #include <stdio.h>
 
 int main() {
-    int x = 5;
-
-    printf("%d", x << 1);
-
-    return 0;
-}', NULL, '10', 1, 'Level 3'),
-(2, 'مراجعه العملي - Level 3', 'codeoutput', 'What is the output?
-#include <stdio.h>
-
-int main() {
     int x = 10;
 
     printf("%d", x >> 1);

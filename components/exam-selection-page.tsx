@@ -59,9 +59,12 @@ export default function ExamSelectionPage({ onSelect, onBack, onViewProfile }: P
   }, [selectedTerm, selectedExam, correctionMode, onSelect])
 
   // More robust filtering for Arabic characters (haa/taa marbouta)
-  const isPractical = (name: string) =>
-    name.toLowerCase().includes('مراجعه العملي') ||
-    name.toLowerCase().includes('مراجعة العملي')
+  const isPractical = (name: string) => {
+    const n = name.toLowerCase()
+    return n.includes('مراجعه العملي') ||
+      n.includes('مراجعة العملي') ||
+      n.includes('lecture revision activity')
+  }
 
   const practicalExams = availableExams.filter(e => isPractical(e))
   const otherExams = availableExams.filter(e => !isPractical(e))
