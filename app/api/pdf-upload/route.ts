@@ -1,74 +1,71 @@
-import { writeFileSync, mkdirSync, readFileSync } from 'fs'
-import { join } from 'path'
+import { supabase } from '@/lib/supabase'
 import { randomBytes } from 'crypto'
 
 export async function POST(request: Request) {
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File
+    const termStr = formData.get('term') as string
+    const category = formData.get('category') as string
 
     if (!file) {
-      return Response.json(
-        { error: 'No file provided' },
-        { status: 400 }
-      )
+      return Response.json({ error: 'لم يتم اختيار ملف' }, { status: 400 })
     }
 
-    const UPLOAD_DIR = join(process.cwd(), 'public', 'pdfs')
+    const term = parseInt(termStr) || 1
+    const fileId = randomBytes(4).toString('hex')
+    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')
+    const storagePath = `${term}/${fileId}-${sanitizedName}`
 
-    // Ensure upload directory exists
-    try {
-      mkdirSync(UPLOAD_DIR, { recursive: true })
-    } catch (err) {
-      console.log('Directory already exists or error:', err)
+    // 1. Upload to Supabase Storage
+    const { error: storageError } = await supabase.storage
+      .from('materials')
+      .upload(storagePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+
+    if (storageError) {
+      console.error('Storage error:', storageError)
+      return Response.json({ error: 'خطأ في رفع الملف للسحابة', details: storageError.message }, { status: 500 })
     }
 
-    // Generate unique filename
-    const fileId = randomBytes(8).toString('hex')
-    const filename = `${fileId}-${file.name}`
-    const filepath = join(UPLOAD_DIR, filename)
+    // 2. Insert metadata into Supabase Table
+    const { data: inserted, error: dbError } = await supabase
+      .from('pdfs')
+      .insert([
+        {
+          name: file.name,
+          url: '', // Will update this in a second
+          storage_path: storagePath,
+          term: term,
+          category: category || 'general',
+          size: file.size
+        }
+      ])
+      .select()
+      .single()
 
-    console.log('ارفع', filepath)
-
-    // Convert file to buffer
-    const buffer = Buffer.from(await file.arrayBuffer())
-
-    // Save file
-    writeFileSync(filepath, buffer)
-
-    // Save to database/storage (we'll use a JSON file for now)
-    const filesListPath = join(process.cwd(), 'public', 'pdfs-list.json')
-    let filesList = []
-
-    try {
-      const data = readFileSync(filesListPath, 'utf-8')
-      filesList = JSON.parse(data)
-    } catch {
-      filesList = []
+    if (dbError) {
+      console.error('Database error:', dbError)
+      await supabase.storage.from('materials').remove([storagePath])
+      return Response.json({ error: 'خطأ في حفظ بيانات الملف', details: dbError.message }, { status: 500 })
     }
 
-    const newEntry = {
-      id: fileId,
-      filename: file.name,
-      savedName: filename,
-      uploadedAt: new Date().toISOString(),
+    // 3. Update with the generated URL (using the DB record ID)
+    if (inserted) {
+      await supabase
+        .from('pdfs')
+        .update({ url: `/api/pdf-download?fileId=${inserted.id}` })
+        .eq('id', inserted.id)
     }
-
-    filesList.push(newEntry)
-    writeFileSync(filesListPath, JSON.stringify(filesList, null, 2))
-
-    console.log('uploaded successfully:', fileId)
 
     return Response.json({
       success: true,
-      fileId,
       filename: file.name,
     })
   } catch (error) {
-    console.error('ابلععع list', error)
-    return Response.json(
-      { error: 'Upload failed', details: String(error) },
-      { status: 500 }
-    )
+    console.error('Upload error:', error)
+    return Response.json({ error: 'فشل في رفع الملف', details: String(error) }, { status: 500 })
   }
 }

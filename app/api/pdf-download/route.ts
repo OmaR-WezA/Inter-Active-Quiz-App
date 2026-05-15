@@ -1,5 +1,4 @@
-import { readFileSync } from 'fs'
-import { join } from 'path'
+import { supabase } from '@/lib/supabase'
 import { PDFDocument, rgb, degrees } from 'pdf-lib'
 
 export async function GET(request: Request) {
@@ -7,72 +6,46 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const fileId = searchParams.get('fileId')
 
-    console.log('Download request for fileId:', fileId)
-
     if (!fileId) {
-      return Response.json(
-        { error: 'No fileId provided' },
-        { status: 400 }
-      )
+      return Response.json({ error: 'No fileId provided' }, { status: 400 })
     }
 
-    // Read files list
-    const filesListPath = join(process.cwd(), 'public', 'pdfs-list.json')
-    let filesList: any[] = []
+    // 1. Fetch metadata from Database to get storage path
+    const { data: fileEntry, error: dbError } = await supabase
+      .from('pdfs')
+      .select('storage_path, name')
+      .eq('id', fileId)
+      .single()
 
-    try {
-      const data = readFileSync(filesListPath, 'utf-8')
-      filesList = JSON.parse(data)
-    } catch (err) {
-      console.error('Error reading files list:', err)
-      return Response.json(
-        { error: 'Files list not found' },
-        { status: 404 }
-      )
+    if (dbError || !fileEntry || !fileEntry.storage_path) {
+      console.error('Database fetch error:', dbError)
+      return Response.json({ error: 'File not found in database' }, { status: 404 })
     }
 
-    const fileEntry = filesList.find((f) => f.id === fileId)
+    // 2. Fetch file content from Supabase Storage
+    const { data: storageBlob, error: storageError } = await supabase.storage
+      .from('materials')
+      .download(fileEntry.storage_path)
 
-    if (!fileEntry) {
-      return Response.json(
-        { error: 'File not found' },
-        { status: 404 }
-      )
+    if (storageError || !storageBlob) {
+      console.error('Storage download error:', storageError)
+      return Response.json({ error: 'Failed to download from storage' }, { status: 500 })
     }
 
-    // Read PDF
-    const filepath = join(
-      process.cwd(),
-      'public',
-      'pdfs',
-      fileEntry.savedName
-    )
+    // 3. Convert Blob/Stream to ArrayBuffer
+    const arrayBuffer = await storageBlob.arrayBuffer()
+    const pdfBuffer = Buffer.from(arrayBuffer)
 
-    let pdfBuffer: Buffer
-    try {
-      pdfBuffer = readFileSync(filepath)
-    } catch (err) {
-      return Response.json(
-        { error: 'PDF file not found' },
-        { status: 404 }
-      )
-    }
-
-    // Load PDF
+    // 4. Apply Watermarking (Using existing logic)
     const pdfDoc = await PDFDocument.load(pdfBuffer)
     const pages = pdfDoc.getPages()
-
-    console.log('Adding watermark to', pages.length, 'pages')
 
     for (const page of pages) {
       const { width, height } = page.getSize()
 
-      // =========================
-      // 🔥 PREMIUM WATERMARK (Repeated)
-      // =========================
+      // --- Repeated Background Watermark ---
       const stepX = 280
       const stepY = 220
-
       for (let x = -width; x < width * 2; x += stepX) {
         for (let y = -height; y < height * 2; y += stepY) {
           page.drawText('WEZA PRODUCTION', {
@@ -86,11 +59,8 @@ export async function GET(request: Request) {
         }
       }
 
-      // =========================
-      // ⭐ MAIN CENTER WATERMARK
-      // =========================
+      // --- Main Center Watermark ---
       const mainFontSize = Math.min(width, height) * 0.13
-
       page.drawText('WEZA PRODUCTION', {
         x: width / 2 - mainFontSize * 2.2,
         y: height / 2,
@@ -100,9 +70,7 @@ export async function GET(request: Request) {
         rotate: degrees(35),
       })
 
-      // =========================
-      // 🧾 FOOTER (حقوق)
-      // =========================
+      // --- Footer ---
       page.drawText('© Weza Production – All Rights Reserved', {
         x: width / 2 - 140,
         y: 18,
@@ -117,16 +85,12 @@ export async function GET(request: Request) {
     return new Response(watermarkedPdf, {
       headers: {
         'Content-Type': 'application/pdf',
-        // مهم: اسم آمن بدون مشاكل encoding
-        'Content-Disposition': `attachment; filename="document.pdf"`,
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(fileEntry.name)}.pdf"`,
         'Cache-Control': 'no-cache, no-store, must-revalidate',
       },
     })
   } catch (error) {
-    console.error('ابلععع downlaod', error)
-    return Response.json(
-      { error: 'Failed to download file', details: String(error) },
-      { status: 500 }
-    )
+    console.error('Download error:', error)
+    return Response.json({ error: 'فشل تحميل الملف وتعديله', details: String(error) }, { status: 500 })
   }
 }

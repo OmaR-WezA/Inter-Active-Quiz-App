@@ -1,78 +1,49 @@
-import { unlinkSync, readFileSync, writeFileSync } from 'fs'
-import { join } from 'path'
+import { supabase } from '@/lib/supabase'
 
 export async function POST(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const fileId = searchParams.get('fileId')
 
-    console.log(' Delete request for fileId:', fileId)
-
     if (!fileId) {
-      return Response.json(
-        { error: 'No fileId provided' },
-        { status: 400 }
-      )
+      return Response.json({ error: 'Missing fileId' }, { status: 400 })
     }
 
-    // Get file from list
-    const filesListPath = join(process.cwd(), 'public', 'pdfs-list.json')
-    let filesList = []
+    // 1. Get file metadata to find storage path
+    const { data: fileEntry, error: fetchError } = await supabase
+      .from('pdfs')
+      .select('storage_path')
+      .eq('id', fileId)
+      .single()
 
-    try {
-      const data = readFileSync(filesListPath, 'utf-8')
-      filesList = JSON.parse(data)
-    } catch (err) {
-      console.error('ابلععع Error reading files list:', err)
-      return Response.json(
-        { error: 'Files list not found' },
-        { status: 404 }
-      )
+    if (fetchError || !fileEntry) {
+      return Response.json({ error: 'File record not found' }, { status: 404 })
     }
 
-    const fileEntry = filesList.find(
-      (f: any) => f.id === fileId
-    )
+    // 2. Delete from Supabase Storage
+    if (fileEntry.storage_path) {
+      const { error: storageError } = await supabase.storage
+        .from('materials')
+        .remove([fileEntry.storage_path])
 
-    if (!fileEntry) {
-      console.error('ابلععع File entry not found for id:', fileId)
-      return Response.json(
-        { error: 'File not found' },
-        { status: 404 }
-      )
+      if (storageError) {
+        console.error('Error deleting from storage:', storageError)
+      }
     }
 
-    // Delete file from filesystem
-    const filepath = join(
-      process.cwd(),
-      'public',
-      'pdfs',
-      fileEntry.savedName
-    )
+    // 3. Delete from Supabase Database
+    const { error: dbError } = await supabase
+      .from('pdfs')
+      .delete()
+      .eq('id', fileId)
 
-    try {
-      unlinkSync(filepath)
-      console.log('File deleted from filesystem:', filepath)
-    } catch (err) {
-      console.error('ابلععع deleting file:', err)
+    if (dbError) {
+      return Response.json({ error: 'Failed to delete record', details: dbError.message }, { status: 500 })
     }
 
-    // Remove from list
-    filesList = filesList.filter(
-      (f: any) => f.id !== fileId
-    )
-    writeFileSync(filesListPath, JSON.stringify(filesList, null, 2))
-
-    console.log('File removed from list')
-
-    return Response.json({
-      success: true,
-    })
+    return Response.json({ success: true })
   } catch (error) {
-    console.error('ابلععع delete', error)
-    return Response.json(
-      { error: 'Failed to delete file', details: String(error) },
-      { status: 500 }
-    )
+    console.error('Delete error:', error)
+    return Response.json({ error: 'Failed to delete file', details: String(error) }, { status: 500 })
   }
 }

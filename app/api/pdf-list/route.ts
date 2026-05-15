@@ -1,29 +1,33 @@
-import { join } from 'path'
-import { readFileSync } from 'fs'
+import { supabase } from '@/lib/supabase'
 
 export async function GET() {
   try {
-    const filesListPath = join(process.cwd(), 'public', 'pdfs-list.json')
+    const { data, error } = await supabase
+      .from('pdfs')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-    let filesList = []
-    try {
-      const data = readFileSync(filesListPath, 'utf-8')
-      filesList = JSON.parse(data)
-    } catch (err) {
-      console.log('list not found or error:', err)
-      filesList = []
+    if (error) {
+      console.error('Error fetching PDFs:', error)
+      return Response.json({ error: 'فشل في تحميل قائمة الملفات', details: error.message }, { status: 500 })
     }
 
-    console.log('جاي اهو', filesList)
+    // Map internal schema to frontend expected fields if necessary
+    // Frontend expects: {id, filename, uploadedAt, size, term, category}
+    // DB has: {id, name, created_at, size, term, category, url, storage_path}
+    const formattedFiles = (data || []).map(f => ({
+      id: f.id,
+      filename: f.name,
+      uploadedAt: f.created_at,
+      size: f.size,
+      term: String(f.term),
+      category: f.category || 'general',
+      url: f.url
+    }))
 
-    return Response.json({
-      files: filesList,
-    })
+    return Response.json({ files: formattedFiles })
   } catch (error) {
-    console.error('ابلععع list', error)
-    return Response.json(
-      { error: 'Failed to list files', details: String(error) },
-      { status: 500 }
-    )
+    console.error('Error in pdf-list API:', error)
+    return Response.json({ error: 'خطأ غير متوقع', details: String(error) }, { status: 500 })
   }
 }
