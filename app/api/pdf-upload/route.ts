@@ -22,12 +22,16 @@ export async function POST(request: Request) {
       .from('materials')
       .upload(storagePath, file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: true
       })
 
     if (storageError) {
-      console.error('Storage error:', storageError)
-      return Response.json({ error: 'خطأ في رفع الملف للسحابة', details: storageError.message }, { status: 500 })
+      console.error('Full Storage Error:', storageError)
+      return Response.json({
+        error: 'خطأ في رفع الملف للسحابة',
+        details: storageError.message,
+        code: (storageError as any).status || 'unknown'
+      }, { status: 500 })
     }
 
     // 2. Insert metadata into Supabase Table
